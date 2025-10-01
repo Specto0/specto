@@ -164,7 +164,13 @@ Este projeto é open source e está disponível sob a licença MIT.
 
 **Specto Team**
 
-- GitHub: [@Specto0](https://github.com/Specto0)
+- GitHub:[@Specto0](https://github.com/Specto0)
+         [@SWAGGATH4K1NG](https://github.com/SWAGGATH4K1NG)
+         [@Daniel](https://github.com/DanielTeixeira22)
+         [@DMonteiro](https://github.com/DMonteiro-dev)
+         [@Churrasco](https://github.com/churrasco1)
+         [@ogait](https://github.com/ogait222)
+
 
 ---
 
@@ -175,4 +181,4 @@ Este projeto é open source e está disponível sob a licença MIT.
 
 ---
 
-**Feito com ❤️ e ☕**
+**Feito com ❤ por Specto Team ☕**
