@@ -1,5 +1,13 @@
 {
   "dependencies": {
     "react-router-dom": "^7.9.3"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "scripts": {
+    "frontend": "cd frontend-specto && npm run dev",
+    "backend": "cd backend-specto && ./venv/bin/uvicorn main:app --reload",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\" --names \"FRONT,BACK\" --prefix-colors \"cyan,yellow\""
   }
 }
