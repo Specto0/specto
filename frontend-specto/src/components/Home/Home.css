@@ -171,6 +171,10 @@ input:checked + .slider:before {
   color: #000;
 }
 
+.home-container.light .carousel {
+  background-color: #e0f7ff;
+}
+
 .home-container.dark {
   background-color: #0e2c4f;
   color: #fff;
