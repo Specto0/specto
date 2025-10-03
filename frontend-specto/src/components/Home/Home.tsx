@@ -1,46 +1,76 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom"; // <-- Importar Link
+import { Link } from "react-router-dom";
 import "./Home.css";
 
-export type Filme = {
+
+// -------------------- Tipo unificado --------------------
+export type ItemMedia = {
   id: number;
-  title: string;
-  poster_path: string | null;
+  titulo: string;
+  poster: string | null;
+  tipo: "filme" | "serie";
 };
 
-export type Serie = {
-  id: number;
-  name: string;
-  poster_path: string | null;
-};
-
+// -------------------- Componente Home --------------------
 export default function Home() {
-  const [filmes, setFilmes] = useState<Filme[]>([]);
-  const [series, setSeries] = useState<Serie[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
 
+  // Estados para todos os carrosséis
+  const [filmesPopulares, setFilmesPopulares] = useState<ItemMedia[]>([]);
+  const [filmesNowPlaying, setFilmesNowPlaying] = useState<ItemMedia[]>([]);
+  const [filmesTopRated, setFilmesTopRated] = useState<ItemMedia[]>([]);
+  const [seriesPopulares, setSeriesPopulares] = useState<ItemMedia[]>([]);
+  const [seriesOnAir, setSeriesOnAir] = useState<ItemMedia[]>([]);
+  const [seriesTopRated, setSeriesTopRated] = useState<ItemMedia[]>([]);
+
+  // -------------------- Funções de mapeamento --------------------
+  const mapFilme = (f: any): ItemMedia => ({
+    id: f.id,
+    titulo: f.titulo ?? f.title,
+    poster: f.poster ?? f.poster_path,
+    tipo: "filme",
+  });
+
+  const mapSerie = (s: any): ItemMedia => ({
+    id: s.id,
+    titulo: s.titulo ?? s.name,
+    poster: s.poster ?? s.poster_path,
+    tipo: "serie",
+  });
+
+  // -------------------- Carregar dados iniciais --------------------
   useEffect(() => {
     if (searching) return;
-
     setLoading(true);
 
-    Promise.all([
-      fetch("http://127.0.0.1:8000/filmes-populares").then((res) => res.json()),
-      fetch("http://127.0.0.1:8000/series-populares").then((res) => res.json()),
-    ])
-      .then(([dataFilmes, dataSeries]) => {
-        setFilmes(dataFilmes.results.slice(0, 10));
-        setSeries(dataSeries.results.slice(0, 10));
+    const endpoints = [
+      { url: "http://127.0.0.1:8000/filmes/populares", setter: setFilmesPopulares, mapper: mapFilme },
+      { url: "http://127.0.0.1:8000/filmes/now-playing", setter: setFilmesNowPlaying, mapper: mapFilme },
+      { url: "http://127.0.0.1:8000/filmes/top-rated", setter: setFilmesTopRated, mapper: mapFilme },
+      { url: "http://127.0.0.1:8000/series/populares", setter: setSeriesPopulares, mapper: mapSerie },
+      { url: "http://127.0.0.1:8000/series/on-air", setter: setSeriesOnAir, mapper: mapSerie },
+      { url: "http://127.0.0.1:8000/series/top-rated", setter: setSeriesTopRated, mapper: mapSerie },
+    ];
+
+    Promise.all(endpoints.map(e => fetch(e.url).then(res => res.json())))
+      .then(results => {
+        results.forEach((data, index) => {
+          const { setter, mapper } = endpoints[index];
+          // Se já vem do backend no formato "results", usamos, senão assume array direto
+          const itemsArray = Array.isArray(data.results) ? data.results : data;
+          setter(itemsArray.slice(0, 10).map(mapper));
+        });
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(err => {
         console.error("Erro ao buscar dados:", err);
         setLoading(false);
       });
   }, [searching]);
 
+  // -------------------- Pesquisa --------------------
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -49,13 +79,19 @@ export default function Home() {
     setSearching(true);
 
     fetch(`http://127.0.0.1:8000/pesquisa?query=${encodeURIComponent(query)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setFilmes(data.filmes || []);
-        setSeries(data.series || []);
+      .then(res => res.json())
+      .then(data => {
+        const filmes = Array.isArray(data.filmes) ? data.filmes.map(mapFilme) : [];
+        const series = Array.isArray(data.series) ? data.series.map(mapSerie) : [];
+        setFilmesPopulares(filmes);
+        setSeriesPopulares(series);
+        setFilmesNowPlaying([]);
+        setFilmesTopRated([]);
+        setSeriesOnAir([]);
+        setSeriesTopRated([]);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(err => {
         console.error("Erro na pesquisa:", err);
         setLoading(false);
       });
@@ -66,6 +102,34 @@ export default function Home() {
     setSearching(false);
   };
 
+  // -------------------- Renderização do carrossel --------------------
+  const renderCarrossel = (items: ItemMedia[]) => {
+    if (!items || items.length === 0) return <p>Nenhum item encontrado.</p>;
+
+    return (
+      <div className="carousel">
+        {items.map(item => (
+          <Link
+            key={item.id}
+            to={item.tipo === "filme" ? `/filme/${item.id}` : `/serie/${item.id}`}
+            className="card"
+          >
+            <img
+              src={
+                item.poster
+                  ? `https://image.tmdb.org/t/p/w500${item.poster}`
+                  : "https://via.placeholder.com/200x300?text=Sem+Imagem"
+              }
+              alt={item.titulo}
+            />
+            <h3>{item.titulo}</h3>
+          </Link>
+        ))}
+      </div>
+    );
+  };
+
+  // -------------------- Renderização --------------------
   return (
     <div className="home-container">
       <form onSubmit={handleSearch} className="search-form">
@@ -73,10 +137,12 @@ export default function Home() {
           type="text"
           placeholder="Pesquisar filmes ou séries..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           className="search-input"
         />
-        <button type="submit" className="btn-primary">Pesquisar</button>
+        <button type="submit" className="btn-primary">
+          Pesquisar
+        </button>
         {searching && (
           <button type="button" onClick={resetSearch} className="btn-danger">
             Voltar
@@ -87,51 +153,37 @@ export default function Home() {
       {loading ? (
         <p>Carregando...</p>
       ) : (
-        <div className="results-container">
-          {/* Filmes */}
+        <>
           <section>
-            <h2>🎬 Filmes</h2>
-            {filmes.length === 0 ? <p>Nenhum filme encontrado.</p> : (
-              <div className="grid">
-                {filmes.map((f) => (
-                  <Link key={f.id} to={`/filme/${f.id}`} className="card">
-                    <img
-                      src={
-                        f.poster_path
-                          ? `https://image.tmdb.org/t/p/w500${f.poster_path}`
-                          : "https://via.placeholder.com/200x300?text=Sem+Imagem"
-                      }
-                      alt={f.title}
-                    />
-                    <h3>{f.title}</h3>
-                  </Link>
-                ))}
-              </div>
-            )}
+            <h2>🎬 Filmes Populares</h2>
+            {renderCarrossel(filmesPopulares)}
           </section>
 
-          {/* Séries */}
           <section>
-            <h2>📺 Séries</h2>
-            {series.length === 0 ? <p>Nenhuma série encontrada.</p> : (
-              <div className="grid">
-                {series.map((s) => (
-                  <Link key={s.id} to={`/serie/${s.id}`} className="card">
-                    <img
-                      src={
-                        s.poster_path
-                          ? `https://image.tmdb.org/t/p/w500${s.poster_path}`
-                          : "https://via.placeholder.com/200x300?text=Sem+Imagem"
-                      }
-                      alt={s.name}
-                    />
-                    <h3>{s.name}</h3>
-                  </Link>
-                ))}
-              </div>
-            )}
+            <h2>🎬 Filmes em Cartaz</h2>
+            {renderCarrossel(filmesNowPlaying)}
           </section>
-        </div>
+
+          <section>
+            <h2>🎬 Filmes Top Rated</h2>
+            {renderCarrossel(filmesTopRated)}
+          </section>
+
+          <section>
+            <h2>📺 Séries Populares</h2>
+            {renderCarrossel(seriesPopulares)}
+          </section>
+
+          <section>
+            <h2>📺 Séries no Ar</h2>
+            {renderCarrossel(seriesOnAir)}
+          </section>
+
+          <section>
+            <h2>📺 Séries Top Rated</h2>
+            {renderCarrossel(seriesTopRated)}
+          </section>
+        </>
       )}
     </div>
   );
