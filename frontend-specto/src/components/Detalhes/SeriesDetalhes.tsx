@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./Detalhes.css";
 
-type ElencoType = { nome: string; personagem: string; foto?: string | null };
+type ElencoType = { nome: string; personagem?: string; foto?: string | null };
 type ReviewType = { autor: string; conteudo: string };
 type VideoType = { tipo: string; site: string; chave: string };
 
@@ -30,6 +30,9 @@ const SeriesDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const [serie, setSerie] = useState<SerieDetalhesType | null>(null);
 
+  // Estado para controlar quais reviews estão expandidas
+  const [serieExpandida, setSerieExpandida] = useState<{ [key: number]: boolean }>({});
+
   useEffect(() => {
     if (!id) return;
     const fetchSerie = async () => {
@@ -49,20 +52,12 @@ const SeriesDetalhes = () => {
   return (
     <div className="detalhes-container">
       {serie.backdrop && (
-        <img
-          className="detalhes-backdrop"
-          src={serie.backdrop}
-          alt={serie.titulo}
-        />
+        <img className="detalhes-backdrop" src={serie.backdrop} alt={serie.titulo} />
       )}
 
       <div className="detalhes-content">
         {serie.poster && (
-          <img
-            className="detalhes-poster"
-            src={serie.poster}
-            alt={serie.titulo}
-          />
+          <img className="detalhes-poster" src={serie.poster} alt={serie.titulo} />
         )}
 
         <div className="detalhes-texto">
@@ -73,47 +68,14 @@ const SeriesDetalhes = () => {
           <p className="detalhes-sinopse">{serie.sinopse}</p>
 
           <div className="detalhes-info">
-            {serie.data_lancamento && (
-              <p>
-                <strong>Data de Lançamento:</strong> {serie.data_lancamento}
-              </p>
-            )}
-            {serie.nota !== undefined && (
-              <p>
-                <strong>Nota:</strong> ⭐ {serie.nota}
-              </p>
-            )}
-            {serie.adult !== undefined && (
-              <p>
-                <strong>Classificação:</strong>{" "}
-                {serie.adult ? "Adulto" : "Livre"}
-              </p>
-            )}
-            {serie.generos && serie.generos.length > 0 && (
-              <p>
-                <strong>Géneros:</strong> {serie.generos.join(", ")}
-              </p>
-            )}
-            {serie.temporadas !== undefined && (
-              <p>
-                <strong>Temporadas:</strong> {serie.temporadas}
-              </p>
-            )}
-            {serie.episodios !== undefined && (
-              <p>
-                <strong>Episódios:</strong> {serie.episodios}
-              </p>
-            )}
-            {serie.orcamento !== undefined && serie.orcamento !== null && (
-              <p>
-                <strong>Orçamento:</strong> ${serie.orcamento.toLocaleString()}
-              </p>
-            )}
-            {serie.receita !== undefined && serie.receita !== null && (
-              <p>
-                <strong>Receita:</strong> ${serie.receita.toLocaleString()}
-              </p>
-            )}
+            {serie.data_lancamento && <p><strong>Data de Lançamento:</strong> {serie.data_lancamento}</p>}
+            {serie.nota !== undefined && <p><strong>Nota:</strong> ⭐ {serie.nota}</p>}
+            {serie.adult !== undefined && <p><strong>Classificação:</strong> {serie.adult ? "Adulto" : "Livre"}</p>}
+            {serie.generos && <p><strong>Géneros:</strong> {serie.generos.join(", ")}</p>}
+            {serie.temporadas !== undefined && <p><strong>Temporadas:</strong> {serie.temporadas}</p>}
+            {serie.episodios !== undefined && <p><strong>Episódios:</strong> {serie.episodios}</p>}
+            {serie.orcamento && <p><strong>Orçamento:</strong> ${serie.orcamento.toLocaleString()}</p>}
+            {serie.receita && <p><strong>Receita:</strong> ${serie.receita.toLocaleString()}</p>}
           </div>
 
           {/* Elenco */}
@@ -124,9 +86,7 @@ const SeriesDetalhes = () => {
                 {serie.elenco.map((ator, idx) => (
                   <div className="elenco-card" key={idx}>
                     {ator.foto && <img src={ator.foto} alt={ator.nome} />}
-                    <p>
-                      <strong>{ator.nome}</strong>
-                    </p>
+                    <p><strong>{ator.nome}</strong></p>
                     {ator.personagem && <p>{ator.personagem}</p>}
                   </div>
                 ))}
@@ -138,15 +98,31 @@ const SeriesDetalhes = () => {
           {serie.reviews && serie.reviews.length > 0 && (
             <>
               <h2>Reviews</h2>
-              <div className="reviews-grid">
-                {serie.reviews.map((rev, idx) => (
-                  <div className="review-card" key={idx}>
-                    <p>
-                      <strong>{rev.autor}</strong>
-                    </p>
-                    <p>{rev.conteudo}</p>
-                  </div>
-                ))}
+              <div className="reviews-col">
+                {serie.reviews.map((rev, idx) => {
+                  const expandida = serieExpandida[idx] || false;
+                  return (
+                    <div className="review-card" key={idx}>
+                      <p><strong>{rev.autor}</strong></p>
+                      <p className={`review-text ${expandida ? "expandido" : ""}`}>
+                        {rev.conteudo}
+                      </p>
+                      {rev.conteudo.length > 150 && (
+                        <button
+                          className="ver-mais"
+                          onClick={() =>
+                            setSerieExpandida((prev) => ({
+                              ...prev,
+                              [idx]: !expandida,
+                            }))
+                          }
+                        >
+                          {expandida ? "Ver menos" : "Ver mais"}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}

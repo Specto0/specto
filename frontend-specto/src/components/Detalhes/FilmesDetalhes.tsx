@@ -42,6 +42,9 @@ export default function FilmesDetalhes() {
   const { id } = useParams<{ id: string }>();
   const [filme, setFilme] = useState<FilmeDetalhesType | null>(null);
 
+  // 👉 NOVO: vamos guardar o estado de expansão de cada review
+  const [reviewsExpandida, setReviewsExpandida] = useState<{ [key: number]: boolean }>({});
+
   useEffect(() => {
     if (!id) return;
     const fetchFilme = async () => {
@@ -100,16 +103,38 @@ export default function FilmesDetalhes() {
           {filme.reviews && filme.reviews.length > 0 && (
             <>
               <h2>Reviews</h2>
-              <div className="reviews-grid">
-                {filme.reviews.map((rev, idx) => (
-                  <div className="review-card" key={idx}>
-                    <p><strong>{rev.autor}</strong></p>
-                    <p>{rev.conteudo}</p>
-                  </div>
-                ))}
+              <div className="reviews-col">
+                {filme.reviews.map((rev, idx) => {
+                  const expandida = reviewsExpandida[idx] || false;
+
+                  return (
+                    <div className="review-card" key={idx}>
+                      <p><strong>{rev.autor}</strong></p>
+                      <p className={`review-text ${expandida ? "expandido" : ""}`}>
+                        {rev.conteudo}
+                      </p>
+
+                      {/* Botão "Ver mais" só aparece se o texto tiver mais de 150 caracteres */}
+                      {rev.conteudo.length > 150 && (
+                        <button
+                          className="ver-mais"
+                          onClick={() =>
+                            setReviewsExpandida((prev) => ({
+                              ...prev,
+                              [idx]: !expandida,
+                            }))
+                          }
+                        >
+                          {expandida ? "Ver menos" : "Ver mais"}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
+
 
           {/* Vídeos */}
           {filme.videos && filme.videos.length > 0 && (

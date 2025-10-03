@@ -1,6 +1,9 @@
 {
   "dependencies": {
-    "react-router-dom": "^7.9.3"
+    "python3": "^0.0.1",
+    "react-router-dom": "^7.9.3",
+    "uvicorn": "^0.0.1-security",
+    "vite": "^7.1.9"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

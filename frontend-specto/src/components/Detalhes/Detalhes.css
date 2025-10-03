@@ -95,14 +95,15 @@
   margin-bottom: 5px;
 }
 
-/* Grid de reviews */
-.reviews-grid {
-  display: grid;
-  grid-template-rows: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 15px;
+/* Container das reviews em coluna */
+.reviews-col {
+  display: flex;
+  flex-direction: column; /* organiza os cards verticalmente */
+  gap: 20px; /* espaço vertical entre os cards */
   margin-bottom: 25px;
 }
 
+/* Card individual de review */
 .review-card {
   background-color: #1e1e1e;
   border-radius: 8px;
@@ -111,16 +112,53 @@
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column; /* garante que o conteúdo do card fique em coluna */
 }
 
+/* Efeito ao passar o mouse */
 .review-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 6px 20px rgba(0,0,0,0.6);
 }
 
+/* Autor da review */
 .review-card strong {
   color: #e50914;
+  margin-bottom: 5px; /* espaço entre autor e texto */
 }
+
+/* Limita o texto a 3 linhas */
+.review-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* limita a 3 linhas */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Quando expandido, mostra todo o texto */
+.review-text.expandido {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* Botão ver mais/ver menos */
+.ver-mais {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: #e50914;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s;
+  align-self: flex-start; /* garante que o botão fique alinhado à esquerda do card */
+}
+
+.ver-mais:hover {
+  color: #ff4c4c;
+}
+
 
 /* Videos */
 .videos-grid {
