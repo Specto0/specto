@@ -128,26 +128,47 @@ export default function Home() {
       </div>
     );
   };
+  // -------------------- Dark/Light mode --------------------
+
+  
+     const [toggleDarkMode, setToggleDarkMode] = useState(true);
+
+     
+     const toggleDarkTheme = () => {
+       setToggleDarkMode(!toggleDarkMode);
+     };
+
+
 
   // -------------------- Renderização --------------------
   return (
-    <div className="home-container">
+    <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
       <form onSubmit={handleSearch} className="search-form">
         <input
           type="text"
           placeholder="Pesquisar filmes ou séries..."
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           className="search-input"
         />
         <button type="submit" className="btn-primary">
           Pesquisar
         </button>
+
         {searching && (
           <button type="button" onClick={resetSearch} className="btn-danger">
             Voltar
           </button>
         )}
+
+        <label className="switch">
+          <input
+            type="checkbox"
+            checked={toggleDarkMode}
+            onChange={toggleDarkTheme}
+          />
+          <span className="slider round"></span>
+        </label>
       </form>
 
       {loading ? (
