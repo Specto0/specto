@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Home.css";
+import NavBar from "../NavBar/NavBar.tsx";
 
 
-// -------------------- Tipo unificado --------------------
+
+
 export type ItemMedia = {
   id: number;
   titulo: string;
@@ -11,13 +13,11 @@ export type ItemMedia = {
   tipo: "filme" | "serie";
 };
 
-// -------------------- Componente Home --------------------
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
 
-  // Estados para todos os carrosséis
   const [filmesPopulares, setFilmesPopulares] = useState<ItemMedia[]>([]);
   const [filmesNowPlaying, setFilmesNowPlaying] = useState<ItemMedia[]>([]);
   const [filmesTopRated, setFilmesTopRated] = useState<ItemMedia[]>([]);
@@ -25,7 +25,6 @@ export default function Home() {
   const [seriesOnAir, setSeriesOnAir] = useState<ItemMedia[]>([]);
   const [seriesTopRated, setSeriesTopRated] = useState<ItemMedia[]>([]);
 
-  // -------------------- Funções de mapeamento --------------------
   const mapFilme = (f: any): ItemMedia => ({
     id: f.id,
     titulo: f.titulo ?? f.title,
@@ -40,7 +39,6 @@ export default function Home() {
     tipo: "serie",
   });
 
-  // -------------------- Carregar dados iniciais --------------------
   useEffect(() => {
     if (searching) return;
     setLoading(true);
@@ -58,7 +56,6 @@ export default function Home() {
       .then(results => {
         results.forEach((data, index) => {
           const { setter, mapper } = endpoints[index];
-          // Se já vem do backend no formato "results", usamos, senão assume array direto
           const itemsArray = Array.isArray(data.results) ? data.results : data;
           setter(itemsArray.slice(0, 10).map(mapper));
         });
@@ -70,7 +67,6 @@ export default function Home() {
       });
   }, [searching]);
 
-  // -------------------- Pesquisa --------------------
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -102,7 +98,6 @@ export default function Home() {
     setSearching(false);
   };
 
-  // -------------------- Renderização do carrossel --------------------
   const renderCarrossel = (items: ItemMedia[]) => {
     if (!items || items.length === 0) return <p>Nenhum item encontrado.</p>;
 
@@ -128,48 +123,23 @@ export default function Home() {
       </div>
     );
   };
-  // -------------------- Dark/Light mode --------------------
 
-  
-     const [toggleDarkMode, setToggleDarkMode] = useState(true);
+  const [toggleDarkMode, setToggleDarkMode] = useState(true);
+  const toggleDarkTheme = () => {
+    setToggleDarkMode(!toggleDarkMode);
+  };
 
-     
-     const toggleDarkTheme = () => {
-       setToggleDarkMode(!toggleDarkMode);
-     };
-
-
-
-  // -------------------- Renderização --------------------
   return (
     <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
-      <form onSubmit={handleSearch} className="search-form">
-        <input
-          type="text"
-          placeholder="Pesquisar filmes ou séries..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="search-input"
-        />
-        <button type="submit" className="btn-primary">
-          Pesquisar
-        </button>
-
-        {searching && (
-          <button type="button" onClick={resetSearch} className="btn-danger">
-            Voltar
-          </button>
-        )}
-
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={toggleDarkMode}
-            onChange={toggleDarkTheme}
-          />
-          <span className="slider round"></span>
-        </label>
-      </form>
+      <NavBar
+        query={query}
+        setQuery={setQuery}
+        searching={searching}
+        handleSearch={handleSearch}
+        resetSearch={resetSearch}
+        toggleDarkMode={toggleDarkMode}
+        toggleDarkTheme={toggleDarkTheme}
+      />
 
       {loading ? (
         <p>Carregando...</p>
@@ -179,27 +149,22 @@ export default function Home() {
             <h2>🎬 Filmes Populares</h2>
             {renderCarrossel(filmesPopulares)}
           </section>
-
           <section>
             <h2>🎬 Filmes em Cartaz</h2>
             {renderCarrossel(filmesNowPlaying)}
           </section>
-
           <section>
             <h2>🎬 Filmes Top Rated</h2>
             {renderCarrossel(filmesTopRated)}
           </section>
-
           <section>
             <h2>📺 Séries Populares</h2>
             {renderCarrossel(seriesPopulares)}
           </section>
-
           <section>
             <h2>📺 Séries no Ar</h2>
             {renderCarrossel(seriesOnAir)}
           </section>
-
           <section>
             <h2>📺 Séries Top Rated</h2>
             {renderCarrossel(seriesTopRated)}

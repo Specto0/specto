@@ -88,8 +88,7 @@ section h2 {
 /* -------------------- Cards -------------------- */
 .card {
   flex: 0 0 auto;
-  width: 150px;
-  background-color: #1f1f1f;
+  width: 155px;
   border-radius: 8px;
   overflow: hidden;
   text-align: center;
@@ -104,14 +103,13 @@ section h2 {
 
 .card h3 {
   font-size: 14px;
-  padding: 8px;
+  padding: 5px;
   color: #fff;
 }
 
 /* Hover effects */
 .card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
 /* -------------------- Mensagens -------------------- */
@@ -120,66 +118,43 @@ p {
   font-size: 16px;
 }
 
-/* -------------------- Dark/light mode -------------------- */
+/* -------------------- Dark/Light Mode Changes -------------------- */
 
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 28px;
-  margin-left: 12px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #ccc;
-  transition: 0.4s;
-  border-radius: 28px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #2196f3;
-}
-
-input:checked + .slider:before {
-  transform: translateX(22px);
-}
-
-/* Light & Dark theme */
+/* Light Mode */
 .home-container.light {
-  background-color: #a1d1f1;
+  background-color: #dfe9f0;
   color: #000;
 }
 
 .home-container.light .carousel {
-  background-color: #e0f7ff;
+  background-color:#dfe9f0;
 }
 
-.home-container.dark {
-  background-color: #0e2c4f;
+.home-container.light .card h3 {
+  color: #000;
+ }
+
+ .home-container.light .navbar {
+  background: var(--navbar-bg, #2b313d);
+  
+}
+
+ /* DarkMode */
+
+ .home-container.dark {
+  background-color: #03162c;
   color: #fff;
 }
 
+.home-container.dark .carousel {
+  background-color: #03162c
+}
+
+.home-container.dark .navbar {
+  background: var(--navbar-bg, #2b313d);
+  
+}
+ 
 /* -------------------- Responsividade -------------------- */
 @media (max-width: 768px) {
   .card {
