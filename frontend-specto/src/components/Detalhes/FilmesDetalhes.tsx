@@ -1,6 +1,17 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./Detalhes.css";
+import NavBar from "../NavBar/NavBar.tsx";
+
+type NavBarProps = {
+  query: string;
+  setQuery: (q: string) => void;
+  searching: boolean;
+  handleSearch: (e: React.FormEvent) => void;
+  resetSearch: () => void;
+  toggleDarkMode: boolean;
+  toggleDarkTheme: () => void;
+};
 
 type ElencoType = {
   nome: string;
@@ -38,7 +49,13 @@ type FilmeDetalhesType = {
   videos?: VideoType[];
 };
 
-export default function FilmesDetalhes() {
+export default function FilmesDetalhes ({query,
+  setQuery,
+  searching,
+  handleSearch,
+  resetSearch,
+  toggleDarkMode,
+  toggleDarkTheme,}:NavBarProps) {
   const { id } = useParams<{ id: string }>();
   const [filme, setFilme] = useState<FilmeDetalhesType | null>(null);
 
@@ -63,6 +80,15 @@ export default function FilmesDetalhes() {
 
   return (
     <div className="detalhes-container">
+      <NavBar
+              query={query}
+              setQuery={setQuery}
+              searching={searching}
+              handleSearch={handleSearch}
+              resetSearch={resetSearch}
+              toggleDarkMode={toggleDarkMode}
+              toggleDarkTheme={toggleDarkTheme}
+            />
       {filme.backdrop && <img className="detalhes-backdrop" src={filme.backdrop} alt={filme.titulo} />}
 
       <div className="detalhes-content">

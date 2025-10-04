@@ -1,10 +1,21 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./Detalhes.css";
+import NavBar from "../NavBar/NavBar.tsx";
 
 type ElencoType = { nome: string; personagem?: string; foto?: string | null };
 type ReviewType = { autor: string; conteudo: string };
 type VideoType = { tipo: string; site: string; chave: string };
+
+type NavBarProps = {
+  query: string;
+  setQuery: (q: string) => void;
+  searching: boolean;
+  handleSearch: (e: React.FormEvent) => void;
+  resetSearch: () => void;
+  toggleDarkMode: boolean;
+  toggleDarkTheme: () => void;
+};
 
 type SerieDetalhesType = {
   id: number;
@@ -26,7 +37,14 @@ type SerieDetalhesType = {
   videos?: VideoType[];
 };
 
-const SeriesDetalhes = () => {
+
+export default function SeriesDetalhes({query,
+  setQuery,
+  searching,
+  handleSearch,
+  resetSearch,
+  toggleDarkMode,
+  toggleDarkTheme,}:NavBarProps) { 
   const { id } = useParams<{ id: string }>();
   const [serie, setSerie] = useState<SerieDetalhesType | null>(null);
 
@@ -51,6 +69,15 @@ const SeriesDetalhes = () => {
 
   return (
     <div className="detalhes-container">
+      <NavBar
+                    query={query}
+                    setQuery={setQuery}
+                    searching={searching}
+                    handleSearch={handleSearch}
+                    resetSearch={resetSearch}
+                    toggleDarkMode={toggleDarkMode}
+                    toggleDarkTheme={toggleDarkTheme}
+                  />
       {serie.backdrop && (
         <img className="detalhes-backdrop" src={serie.backdrop} alt={serie.titulo} />
       )}
@@ -151,5 +178,3 @@ const SeriesDetalhes = () => {
     </div>
   );
 };
-
-export default SeriesDetalhes;
