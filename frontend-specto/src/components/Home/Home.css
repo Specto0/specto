@@ -124,19 +124,22 @@ p {
 .home-container.light {
   background-color: #dfe9f0;
   color: #000;
+  transition: background 0.3s, color 0.3s;
 }
 
 .home-container.light .carousel {
   background-color:#dfe9f0;
+  transition: background 0.3s, color 0.3s;
 }
 
 .home-container.light .card h3 {
   color: #000;
+  transition: background 0.3s, color 0.3s;
  }
 
  .home-container.light .navbar {
-  background: var(--navbar-bg, #2b313d);
-  
+  background: var(--navbar-bg, #dfe9f0);
+  transition: background 0.3s, color 0.3s;
 }
 
  /* DarkMode */
@@ -144,15 +147,22 @@ p {
  .home-container.dark {
   background-color: #03162c;
   color: #fff;
+  transition: background 0.3s, color 0.3s;
 }
 
 .home-container.dark .carousel {
-  background-color: #03162c
+  background-color: #03162c;
+  transition: background 0.3s, color 0.3s;
 }
 
 .home-container.dark .navbar {
-  background: var(--navbar-bg, #2b313d);
-  
+  background: var(--navbar-bg, #03162c);
+  transition: background 0.3s, color 0.3s;
+}
+
+.home-container.dark .carousel {
+  background-color:#03162c;
+  transition: background 0.3s, color 0.3s;
 }
  
 /* -------------------- Responsividade -------------------- */

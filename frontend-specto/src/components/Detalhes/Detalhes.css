@@ -1,39 +1,56 @@
 /* Container principal */
 .detalhes-container {
-  padding: 20px;
-  max-width: max-content;
-  margin: 0 auto;
-  font-family: "Roboto", Arial, sans-serif;
-  color: #f5f5f5;
-  background-color: #141414;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 1rem;
 }
+
+.detalhes-header {
+  position: relative;
+  width: 100%;
+  min-height: 500px;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
 
 /* Backdrop */
 .detalhes-backdrop {
+  position: absolute;
   width: 100%;
-  max-height: 450px;
-  object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  height: 100%;
+  filter: brightness(0.4) blur(2px);
+  z-index: 0;
+}
+
+.detalhes-overlay {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.4); /* leve transparência sobre o backdrop */
+  z-index: 1;
 }
 
 /* Conteúdo principal */
 .detalhes-content {
-  display: static;
+  display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative;
 }
 
 /* Poster */
+
 .detalhes-poster {
-  width: 200px;
-  border-radius: 10px;
+  width: 350px;
+  height: auto;
+  border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  transition: transform 0.3s;
-  cursor: pointer;
+  flex-shrink: 0;
+  margin-top:40px;
 }
 
 .detalhes-poster:hover {
@@ -43,56 +60,67 @@
 /* Título e infos */
 .detalhes-titulo {
   font-size: 2.5rem;
-  color: #e50914;
-  margin-bottom: 5px;
+  color: #ffffff;
+  margin-top: 40px;
 }
 
-.detalhes-original {
-  font-size: 1rem;
-  color: #bbb;
-  margin-bottom: 15px;
+.detalhes-texto {
+  flex: 1;
+  z-index: 2;
+}
+
+.detalhes-titulo {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  margin: 15px;
 }
 
 .detalhes-sinopse {
-  font-size: 1.15rem;
-  line-height: 1.6;
-  margin-bottom: 20px;
+  margin: 15px;
+  line-height: 1.5;
+  margin-top: 40px;
+  color:#ffffff;
+  font-size: 1.2rem;
 }
 
 /* Infos gerais */
-.detalhes-info p {
-  margin: 5px 0;
+.detalhes-info  {
+  gap: 15px;
+  margin: 15px;
 }
 
 .detalhes-info strong {
-  color: #e50914;
+  color: #ffffff;
 }
 
 /* Grid de elenco */
 .elenco-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 15px;
   margin-bottom: 25px;
+  margin-left: 50px;
 }
 
 .elenco-card {
   background-color: #1e1e1e;
-  border-radius: 8px;
-  padding: 10px;
   text-align: center;
   transition: transform 0.3s, box-shadow 0.3s;
+  width: 100%;
 }
 
 .elenco-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.6);
 }
 
 .elenco-card img {
   width: 100%;
   border-radius: 5px;
-  margin-bottom: 5px;
+}
+
+.elenco-h2 {
+  margin-left: 50px;
+  color: #ffffff;
 }
 
 /* Container das reviews em coluna */
@@ -101,6 +129,7 @@
   flex-direction: column; /* organiza os cards verticalmente */
   gap: 20px; /* espaço vertical entre os cards */
   margin-bottom: 25px;
+  margin:50px;
 }
 
 /* Card individual de review */
@@ -110,7 +139,6 @@
   padding: 15px;
   font-size: 0.95rem;
   line-height: 1.4;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: transform 0.3s, box-shadow 0.3s;
   display: flex;
   flex-direction: column; /* garante que o conteúdo do card fique em coluna */
@@ -118,13 +146,12 @@
 
 /* Efeito ao passar o mouse */
 .review-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+  transform: translateY(-10px);
 }
 
 /* Autor da review */
 .review-card strong {
-  color: #e50914;
+  color: #ffffff;
   margin-bottom: 5px; /* espaço entre autor e texto */
 }
 
@@ -143,12 +170,17 @@
   overflow: visible;
 }
 
+.review-h2 {
+  margin-left: 50px;
+  color: #ffffff;
+}
+
 /* Botão ver mais/ver menos */
 .ver-mais {
   margin-top: 8px;
   background: none;
   border: none;
-  color: #e50914;
+  color: #ffffff;
   font-weight: bold;
   cursor: pointer;
   transition: color 0.3s;
@@ -166,6 +198,7 @@
   flex-wrap: wrap;
   gap: 15px;
   margin-bottom: 20px;
+  margin: 50px;
 }
 
 .video-card iframe {
@@ -174,11 +207,16 @@
   border-radius: 8px;
 }
 
+.videos-h2 {
+  margin-left: 50px;
+  color: #ffffff;
+}
+
 /* Loading */
 .loading {
   text-align: center;
   font-size: 1.8rem;
-  color: #e50914;
+  color: #ffffff;
   margin-top: 60px;
 }
 
@@ -188,8 +226,13 @@
     flex-direction: row;
     gap: 30px;
   }
-
-  .detalhes-texto {
-    flex: 1;
-  }
 }
+
+/* -------------------- Dark/Light Mode Changes -------------------- */
+
+
+
+
+
+
+
