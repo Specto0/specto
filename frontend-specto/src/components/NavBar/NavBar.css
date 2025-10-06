@@ -2,9 +2,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--navbar-bg, #f8f9fa);
-  color: var(--navbar-text, #222);
-  padding: 12px 24px;
+  background: var(--navbar-bg, #121212);
+  color: var(--navbar-text, #fff);
+  padding: 12px 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .navbar-form {

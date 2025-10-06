@@ -2,9 +2,11 @@
 
 /* Container principal */
 .home-container {
-  max-width: max-content;
-  margin: 0 auto;
-  padding: 20px;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #fff;
   background-color: #121212;
@@ -16,6 +18,7 @@
   gap: 10px;
   margin-bottom: 30px;
   flex-wrap: wrap;
+  padding: 20px 20px 0 20px;
 }
 
 .search-input {
@@ -56,6 +59,11 @@
 /* -------------------- Seções e títulos -------------------- */
 section {
   margin-bottom: 40px;
+  width: 100%;
+}
+
+section:last-child {
+  margin-bottom: 0;
 }
 
 section h2 {
@@ -63,14 +71,16 @@ section h2 {
   font-size: 22px;
   border-left: 4px solid #e50914;
   padding-left: 8px;
+  margin-left: 20px;
 }
 
 /* -------------------- Carrossel -------------------- */
 .carousel {
   display: flex;
-  gap: 15px;
+  gap: 25px;
+  width: 100%;
   overflow-x: auto;
-  padding-bottom: 10px;
+  padding: 0 0 10px 20px;
   scroll-behavior: smooth;
 }
 
@@ -116,6 +126,7 @@ section h2 {
 p {
   color: #bbb;
   font-size: 16px;
+  padding: 0 20px;
 }
 
 /* -------------------- Dark/Light Mode Changes -------------------- */
