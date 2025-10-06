@@ -158,7 +158,7 @@
 /* Limita o texto a 3 linhas */
 .review-text {
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* limita a 3 linhas */
+  -webkit-line-clamp: 2; /* limita a 3 linhas */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;

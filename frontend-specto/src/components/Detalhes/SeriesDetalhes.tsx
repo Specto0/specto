@@ -166,7 +166,7 @@ export default function SeriesDetalhes({query,
                   <p className={`review-text ${expandida ? "expandido" : ""}`}>
                     {rev.conteudo}
                   </p>
-                  {rev.conteudo.length > 150 && (
+                  {rev.conteudo.length > 300 && (
                     <button
                       className="ver-mais"
                       onClick={() =>
