@@ -3,9 +3,6 @@ import { Link } from "react-router-dom";
 import "./Home.css";
 import NavBar from "../NavBar/NavBar.tsx";
 
-
-
-
 export type ItemMedia = {
   id: number;
   titulo: string;
@@ -39,8 +36,9 @@ export default function Home() {
     tipo: "serie",
   });
 
+  // Busca inicial para mostrar seções padrão
   useEffect(() => {
-    if (searching) return;
+    if (searching) return; // Não carrega se estiver pesquisando
     setLoading(true);
 
     const endpoints = [
@@ -67,6 +65,7 @@ export default function Home() {
       });
   }, [searching]);
 
+  // Função de pesquisa
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -79,12 +78,16 @@ export default function Home() {
       .then(data => {
         const filmes = Array.isArray(data.filmes) ? data.filmes.map(mapFilme) : [];
         const series = Array.isArray(data.series) ? data.series.map(mapSerie) : [];
+
         setFilmesPopulares(filmes);
         setSeriesPopulares(series);
+
+        // Limpa seções padrão enquanto pesquisa está ativa
         setFilmesNowPlaying([]);
         setFilmesTopRated([]);
         setSeriesOnAir([]);
         setSeriesTopRated([]);
+
         setLoading(false);
       })
       .catch(err => {
@@ -99,7 +102,7 @@ export default function Home() {
   };
 
   const renderCarrossel = (items: ItemMedia[]) => {
-    if (!items || items.length === 0) return <p>Nenhum item encontrado.</p>;
+    if (!items || items.length === 0) return null;
 
     return (
       <div className="carousel">
@@ -125,9 +128,7 @@ export default function Home() {
   };
 
   const [toggleDarkMode, setToggleDarkMode] = useState(true);
-  const toggleDarkTheme = () => {
-    setToggleDarkMode(!toggleDarkMode);
-  };
+  const toggleDarkTheme = () => setToggleDarkMode(!toggleDarkMode);
 
   return (
     <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
@@ -143,6 +144,24 @@ export default function Home() {
 
       {loading ? (
         <p>Carregando...</p>
+      ) : searching ? (
+        <>
+          {filmesPopulares.length > 0 && (
+            <section>
+              <h2>🎬 Filmes</h2>
+              {renderCarrossel(filmesPopulares)}
+            </section>
+          )}
+          {seriesPopulares.length > 0 && (
+            <section>
+              <h2>📺 Séries</h2>
+              {renderCarrossel(seriesPopulares)}
+            </section>
+          )}
+          {filmesPopulares.length === 0 && seriesPopulares.length === 0 && (
+            <p>Nenhum resultado encontrado.</p>
+          )}
+        </>
       ) : (
         <>
           <section>
