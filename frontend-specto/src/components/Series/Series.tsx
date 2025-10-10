@@ -1,29 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import NavBar from "../NavBar/NavBar";
+import { Link } from "react-router-dom";
 import "../Home/Home.css";
-import "./Filmes.css";
+import "./Series.css";
 
-export type Filme = {
+export type Serie = {
   id: number;
   titulo: string;
   poster: string | null;
   ano?: number;
-  tipo: "filme";
+  tipo: "serie";
 };
 
-const Filmes: React.FC = () => {
+const Series: React.FC = () => {
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [toggleDarkMode, setToggleDarkMode] = useState(true);
-  const [movies, setMovies] = useState<Filme[]>([]);
+  const [series, setSeries] = useState<Serie[]>([]);
   const [filter, setFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"az" | "za" | "anoC" | "anoD">("az");
+
   const [currentPage, setCurrentPage] = useState(1);
+  const seriesPerPage = 24;
 
-  const moviesPerPage = 24;
-
-  // Pesquisa e tema
   const handleSearch = () => setSearching(true);
   const resetSearch = () => {
     setSearching(false);
@@ -31,39 +30,34 @@ const Filmes: React.FC = () => {
   };
   const toggleDarkTheme = () => setToggleDarkMode((prev) => !prev);
 
-  // Fetch filmes
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/filmes/populares")
-      .then((response) => {
-        if (!response.ok) throw new Error("Erro na resposta da API");
-        return response.json();
-      })
+    fetch("http://127.0.0.1:8000/series/populares")
+      .then((response) => response.json())
       .then((data) => {
-        const filmesArray = Array.isArray(data.results) ? data.results : data;
+        const seriesArray = Array.isArray(data.results) ? data.results : data;
 
-        const filmesFormatados: Filme[] = filmesArray.map((f: any) => ({
-          id: f.id,
-          titulo: f.title || f.titulo || "Sem título",
-          poster: f.poster_path || f.poster || null,
-          ano: f.release_date ? parseInt(f.release_date.split("-")[0]) : undefined,
-          tipo: "filme",
+        const seriesFormatadas: Serie[] = seriesArray.map((s: any) => ({
+          id: s.id,
+          titulo: s.titulo || s.title || "Sem título",
+          poster: s.poster_path || s.poster|| null,
+          ano: s.release_date
+              ? parseInt(s.release_date.split("-")[0])
+              : undefined,
+          tipo: "serie",
         }));
 
-        // Remover duplicados
-        const filmesUnicos = Array.from(
-          new Map(filmesFormatados.map((f) => [f.id, f])).values()
+        // Remove duplicados (ID)
+        const seriesUnicas = Array.from(
+          new Map(seriesFormatadas.map((s) => [s.id, s])).values()
         );
 
-        setMovies(filmesUnicos);
+        setSeries(seriesUnicas);
       })
-      .catch((error) => console.error("Erro ao carregar filmes:", error));
+      .catch((error) => console.error("Erro ao carregar séries:", error));
   }, []);
 
-  // Filtros e ordenação
-  const filteredMovies = movies
-    .filter((movie) =>
-      movie.titulo.toLowerCase().includes(filter.toLowerCase())
-    )
+  const filteredSeries = series
+    .filter((serie) =>serie.titulo.toLowerCase().includes(filter.toLowerCase()))
     .sort((a, b) => {
       switch (sortOrder) {
         case "az":
@@ -79,10 +73,9 @@ const Filmes: React.FC = () => {
       }
     });
 
-  // Paginação
-  const totalPages = Math.ceil(filteredMovies.length / moviesPerPage);
-  const startIndex = (currentPage - 1) * moviesPerPage;
-  const currentMovies = filteredMovies.slice(startIndex, startIndex + moviesPerPage);
+  const totalPages = Math.ceil(filteredSeries.length / seriesPerPage);
+  const startIndex = (currentPage - 1) * seriesPerPage;
+  const currentSeries = filteredSeries.slice(startIndex, startIndex + seriesPerPage );
 
   const nextPage = () => {
     setCurrentPage((prev) => {
@@ -112,8 +105,8 @@ const Filmes: React.FC = () => {
         toggleDarkTheme={toggleDarkTheme}
       />
 
-      <section className="filmes-section">
-        <h2>🎬 Filmes</h2>
+      <section className="series-section">
+        <h2>📺 Séries</h2>
 
         <div className="filters-container">
           <input
@@ -128,9 +121,10 @@ const Filmes: React.FC = () => {
           />
           <select
             value={sortOrder}
-            onChange={(e) =>
-              setSortOrder(e.target.value as "az" | "za" | "anoC" | "anoD")
-            }
+            onChange={(e) => {
+              setSortOrder(e.target.value as "az" | "za" | "anoC" | "anoD");
+              setCurrentPage(1);
+            }}
             className={toggleDarkMode ? "dark-input" : "light-input"}
           >
             <option value="az">Título A–Z</option>
@@ -140,20 +134,20 @@ const Filmes: React.FC = () => {
           </select>
         </div>
 
-        <div className="grid-filmes">
-          {currentMovies.length > 0 ? (
-            currentMovies.map((movie) => (
-              <Link to={`/filme/${movie.id}`} key={movie.id} className="card">
+        <div className="grid-series">
+          {currentSeries.length > 0 ? (
+            currentSeries.map((serie) => (
+              <Link to={`/serie/${serie.id}`} key={serie.id} className="card">
                 <img
                   src={
-                    movie.poster
-                      ? `https://image.tmdb.org/t/p/w500${movie.poster}`
+                    serie.poster
+                      ? `https://image.tmdb.org/t/p/w500${serie.poster}`
                       : "/imagens/placeholder.png"
                   }
-                  alt={movie.titulo}
+                  alt={serie.titulo}
                 />
-                <h3>{movie.titulo}</h3>
-                {movie.ano && <p>{movie.ano}</p>}
+                <h3>{serie.titulo}</h3>
+                {serie.ano && <p>{serie.ano}</p>}
               </Link>
             ))
           ) : (
@@ -161,7 +155,7 @@ const Filmes: React.FC = () => {
           )}
         </div>
 
-        {filteredMovies.length > moviesPerPage && (
+        {filteredSeries.length > seriesPerPage && (
           <div className="pagination-container">
             <button onClick={prevPage} disabled={currentPage === 1}>
               ⬅ Anterior
@@ -181,4 +175,4 @@ const Filmes: React.FC = () => {
   );
 };
 
-export default Filmes;
+export default Series;

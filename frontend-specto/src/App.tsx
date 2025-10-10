@@ -3,6 +3,7 @@ import Home from "./components/Home/Home";
 import FilmesDetalhes from "./components/Detalhes/FilmesDetalhes";
 import SeriesDetalhes from "./components/Detalhes/SeriesDetalhes"; 
 import Filmes from "./components/Filmes/Filmes";       
+import Series from "./components/Series/Series";
 
 
 
@@ -14,7 +15,7 @@ export default function App() {
         <Route path="/filme/:id" element={<FilmesDetalhes />} />
         <Route path="/serie/:id" element={<SeriesDetalhes />} />
         <Route path="/filmes" element={<Filmes />} />
-        <Route path="/series" element={<Home />} />
+        <Route path="/series" element={<Series />} />
         <Route path="/favoritos" element={<Home />} />
         <Route path="/perfil" element={<Home />} />
         <Route path="*" element={<Home />} />

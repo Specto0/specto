@@ -74,9 +74,15 @@ def formatar_detalhes(s: dict) -> dict:
 
 @router.get("/populares")
 def series_populares():
-    url = f"{BASE_URL}/tv/popular?api_key={API_KEY}&language=pt-BR&page=1"
-    series_raw = httpx.get(url).json().get("results", [])
-    return formatar_lista(series_raw)
+    total_paginas = 5
+    series = []
+
+    for page in range(1, total_paginas + 1):
+        url = f"{BASE_URL}/tv/popular?api_key={API_KEY}&language=pt-BR&page={page}"
+        resposta = httpx.get(url).json()
+        series.extend(resposta.get("results", []))
+
+    return formatar_lista(series)   
 
 
 @router.get("/top-rated")
