@@ -19,7 +19,7 @@ export default function NavBar({
   toggleDarkMode,
   toggleDarkTheme,
 }: NavBarProps) {
-  const navigate = useNavigate(); // ✅ Hook para navegar entre páginas
+  const navigate = useNavigate(); // Hook para navegar entre páginas
 
   return (
   <nav className="navbar">
@@ -31,6 +31,27 @@ export default function NavBar({
           className="btn btn-secondary"
         >
           Home
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/filmes")}
+          className="btn btn-secondary"
+        >
+          Filmes  
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/series")}
+          className="btn btn-secondary"
+        >
+          Séries
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/favoritos")}
+          className="btn btn-secondary"
+        >
+          Favoritos
         </button>
       </div>
 
@@ -70,6 +91,13 @@ export default function NavBar({
         <span className="slider round"></span>
       </label>
     </div>
+    <button
+          type="button"
+          onClick={() => navigate("/perfil")}
+          className="btn btn-secondary"
+        >
+          Perfil
+        </button>
   </nav>
 );
 }

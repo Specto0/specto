@@ -1,5 +1,5 @@
 // src/types.ts
-export interface Filme {
+export default interface Filme {
   id: number;
   title: string;
   poster_path: string | null;

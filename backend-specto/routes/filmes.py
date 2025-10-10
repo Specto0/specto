@@ -65,35 +65,42 @@ def formatar_detalhes(f: dict) -> dict:
 
 @router.get("/populares")
 def filmes_populares():
-    url = f"{BASE_URL}/movie/popular?api_key={API_KEY}&language=pt-BR&page=1"
-    resposta = httpx.get(url).json()
-    return formatar_lista(resposta.get("results", []))
+    total_paginas = 5  # limita para não ficar muito pesado
+    filmes = []
+
+    for page in range(1, total_paginas + 1):
+        url = f"{BASE_URL}/movie/popular?api_key={API_KEY}&language=pt-PT&page={page}"
+        resposta = httpx.get(url).json()
+        filmes.extend(resposta.get("results", []))
+
+    return formatar_lista(filmes)
+
 
 
 @router.get("/now-playing")
 def filmes_now_playing():
-    url = f"{BASE_URL}/movie/now_playing?api_key={API_KEY}&language=pt-BR&page=1"
+    url = f"{BASE_URL}/movie/now_playing?api_key={API_KEY}&language=pt-PT&page=1"
     resposta = httpx.get(url).json()
     return formatar_lista(resposta.get("results", []))
 
 
 @router.get("/upcoming")
 def filmes_upcoming():
-    url = f"{BASE_URL}/movie/upcoming?api_key={API_KEY}&language=pt-BR&page=1"
+    url = f"{BASE_URL}/movie/upcoming?api_key={API_KEY}&language=pt-PT&page=1"
     resposta = httpx.get(url).json()
     return formatar_lista(resposta.get("results", []))
 
 
 @router.get("/top-rated")
 def filmes_top_rated():
-    url = f"{BASE_URL}/movie/top_rated?api_key={API_KEY}&language=pt-BR&page=1"
+    url = f"{BASE_URL}/movie/top_rated?api_key={API_KEY}&language=pt-PT&page=1"
     resposta = httpx.get(url).json()
     return formatar_lista(resposta.get("results", []))
 
 
 @router.get("/pesquisa")
 def pesquisa_filmes(query: str):
-    url = f"{BASE_URL}/search/movie?api_key={API_KEY}&language=pt-BR&query={query.strip()}"
+    url = f"{BASE_URL}/search/movie?api_key={API_KEY}&language=pt-PT&query={query.strip()}"
     resposta = httpx.get(url).json()
     return formatar_lista(resposta.get("results", []))
 
@@ -102,7 +109,7 @@ def pesquisa_filmes(query: str):
 def detalhes_filme(filme_id: int):
     url = (
         f"{BASE_URL}/movie/{filme_id}"
-        f"?api_key={API_KEY}&language=pt-BR"
+        f"?api_key={API_KEY}&language=pt-PT"
         f"&append_to_response=credits,reviews,videos,images"
     )
     resposta = httpx.get(url).json()
@@ -111,7 +118,7 @@ def detalhes_filme(filme_id: int):
 
 @router.get("/{filme_id}/reviews")
 def reviews_filme(filme_id: int):
-    url = f"{BASE_URL}/movie/{filme_id}/reviews?api_key={API_KEY}&language=pt-BR&page=1"
+    url = f"{BASE_URL}/movie/{filme_id}/reviews?api_key={API_KEY}&language=pt-PT&page=1"
     resposta = httpx.get(url).json()
     return [
         {"autor": r["author"], "conteudo": r["content"]}
@@ -121,7 +128,7 @@ def reviews_filme(filme_id: int):
 
 @router.get("/{filme_id}/videos")
 def videos_filme(filme_id: int):
-    url = f"{BASE_URL}/movie/{filme_id}/videos?api_key={API_KEY}&language=pt-BR"
+    url = f"{BASE_URL}/movie/{filme_id}/videos?api_key={API_KEY}&language=pt-PT"
     resposta = httpx.get(url).json()
     return [
         {"tipo": v["type"], "site": v["site"], "chave": v["key"]}
@@ -132,7 +139,7 @@ def videos_filme(filme_id: int):
 
 @router.get("/{filme_id}/elenco")
 def elenco_filme(filme_id: int):
-    url = f"{BASE_URL}/movie/{filme_id}/credits?api_key={API_KEY}&language=pt-BR"
+    url = f"{BASE_URL}/movie/{filme_id}/credits?api_key={API_KEY}&language=pt-PT"
     resposta = httpx.get(url).json()
     return [
         {
@@ -146,6 +153,6 @@ def elenco_filme(filme_id: int):
 
 @router.get("/genero/{genero_id}")
 def filmes_por_genero(genero_id: int):
-    url = f"{BASE_URL}/discover/movie?api_key={API_KEY}&language=pt-BR&with_genres={genero_id}&page=1"
+    url = f"{BASE_URL}/discover/movie?api_key={API_KEY}&language=pt-PT&with_genres={genero_id}&page=1"
     resposta = httpx.get(url).json()
     return formatar_lista(resposta.get("results", []))

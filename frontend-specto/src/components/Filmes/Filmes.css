@@ -1,0 +1,105 @@
+.filmes-section {
+  padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.filters-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0 2rem 0;
+}
+
+.filters-container input,
+.filters-container select {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background-color: #fff;
+}
+
+.grid-filmes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  justify-items: center;
+  justify-content: center; /* Centra a grid */
+  padding: 0 1rem; 
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.card {
+  background-color: #222;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 180px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.card img {
+  width: 100%;
+  height: 270px;
+  object-fit: cover;
+}
+
+.card h3 {
+  color: #fff;
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 0.6rem;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination-container button {
+  background-color: #444;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.pagination-container button:hover:not(:disabled) {
+  background-color: #666;
+}
+
+.pagination-container button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-container span {
+  font-size: 1rem;
+  color: #fff;
+}
+
+.dark-input {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #ccc;
+}
+
+.light-input {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #ccc;
+}
