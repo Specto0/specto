@@ -78,9 +78,10 @@ section h2 {
 .carousel {
   display: flex;
   gap: 25px;
-  width: 100%;
+  width: auto;
+  margin : 0 auto;
   overflow-x: auto;
-  padding: 0 0 10px 20px;
+  padding: 10px 20px 20px 20px;
   scroll-behavior: smooth;
 }
 
@@ -102,7 +103,6 @@ section h2 {
   border-radius: 8px;
   overflow: hidden;
   text-align: center;
-  transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .card img {
@@ -114,15 +114,10 @@ section h2 {
 .card h3 {
   font-size: 14px;
   padding: 5px;
-  color: #fff;
-}
-
-/* Hover effects */
-.card:hover {
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
 /* -------------------- Mensagens -------------------- */
+
 p {
   color: #bbb;
   font-size: 16px;
@@ -142,6 +137,11 @@ p {
   background-color:#dfe9f0;
   transition: background 0.3s, color 0.3s;
 }
+
+.home-container.light .card {
+  background-color: #dfe9f0;
+  transition: background 0.3s, color 0.3s;
+ }
 
 .home-container.light .card h3 {
   color: #000;
@@ -166,16 +166,26 @@ p {
   transition: background 0.3s, color 0.3s;
 }
 
+.home-container.dark .card {
+  background-color: #03162c;
+  transition: background 0.3s, color 0.3s;
+ }
+
+.home-container.dark .card h3 {
+  color: #fff;
+  transition: background 0.3s, color 0.3s;
+ }
+
+ .home-container.dark .card:hover {
+  
+ }
+
 .home-container.dark .navbar {
   background: var(--navbar-bg, #03162c);
   transition: background 0.3s, color 0.3s;
 }
 
-.home-container.dark .carousel {
-  background-color:#03162c;
-  transition: background 0.3s, color 0.3s;
-}
- 
+
 /* -------------------- Responsividade -------------------- */
 @media (max-width: 768px) {
   .card {

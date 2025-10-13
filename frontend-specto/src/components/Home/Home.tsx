@@ -55,7 +55,7 @@ export default function Home() {
         results.forEach((data, index) => {
           const { setter, mapper } = endpoints[index];
           const itemsArray = Array.isArray(data.results) ? data.results : data;
-          setter(itemsArray.slice(0, 10).map(mapper));
+          setter(itemsArray.slice(0, 20).map(mapper));
         });
         setLoading(false);
       })
