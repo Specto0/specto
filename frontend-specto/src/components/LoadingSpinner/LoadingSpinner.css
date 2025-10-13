@@ -1,0 +1,134 @@
+/* Container principal - ocupa toda a tela e centraliza */
+.loading-spinner-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+}
+
+/* Wrapper para o spinner e texto */
+.loading-spinner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Container dos anéis */
+.loading-spinner {
+  --spinner-size: 80px;
+  position: relative;
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+}
+
+/* Tamanhos */
+.loading-spinner--small {
+  --spinner-size: 50px;
+}
+
+.loading-spinner--medium {
+  --spinner-size: 80px;
+}
+
+.loading-spinner--large {
+  --spinner-size: 120px;
+}
+
+/* Anéis individuais */
+.spinner-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  box-sizing: border-box;
+  animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+/* Anel 1 - Maior e mais lento */
+.spinner-ring-1 {
+  border-width: 4px;
+  border-top-color: #3b82f6;
+  animation-duration: 1.5s;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Anel 2 - Médio */
+.spinner-ring-2 {
+  width: 75%;
+  height: 75%;
+  top: 12.5%;
+  left: 12.5%;
+  border-width: 3px;
+  border-top-color: #3b82f6;
+  animation-duration: 1.2s;
+  animation-direction: reverse;
+  opacity: 0.7;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+/* Anel 3 - Menor e mais rápido */
+.spinner-ring-3 {
+  width: 50%;
+  height: 50%;
+  top: 25%;
+  left: 25%;
+  border-width: 2px;
+  border-top-color: #3b82f6;
+  animation-duration: 0.9s;
+  opacity: 0.5;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* Animação de rotação */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Texto de loading */
+.loading-text {
+  color: #ffffff;
+  font-size: 2.5rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: pulse 1.5s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  
+}
+
+/* Animação de pulsação do texto */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .loading-spinner--large {
+    --spinner-size: 80px;
+  }
+  
+  .loading-text {
+    font-size: 1rem;
+  }
+}

@@ -73,7 +73,7 @@ export default function NavBar({
         </span>
         <input
           type="text"
-          placeholder="Pesquisar filmes ou séries..."
+          placeholder="Search..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="navbar-input"

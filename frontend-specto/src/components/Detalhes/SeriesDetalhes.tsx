@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import "./Detalhes.css";
 import "../Home/Home.css";
 import NavBar from "../NavBar/NavBar";
+import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 
 type ElencoType = { nome: string; personagem?: string; foto?: string | null };
 type ReviewType = { autor: string; conteudo: string };
@@ -69,7 +70,7 @@ export default function SeriesDetalhes() {
     fetchSerie();
   }, [id]);
 
-  if (loading) return <p className="loading">Carregando detalhes da série...</p>;
+  if (loading) return <LoadingSpinner color="#3b82f6" size="large" />;
   if (!serie) return <p className="loading">Série não encontrada.</p>;
 
   return (

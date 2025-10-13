@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Home.css";
 import NavBar from "../NavBar/NavBar.tsx";
+import LoadingSpinner from "../LoadingSpinner/LoadingSpinner.tsx";
 
 export type ItemMedia = {
   id: number;
@@ -143,7 +144,7 @@ export default function Home() {
       />
 
       {loading ? (
-        <p>Carregando...</p>
+        <LoadingSpinner color="#3b82f6" size="large" />
       ) : searching ? (
         <>
           {filmesPopulares.length > 0 && (

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import "./Detalhes.css";
 import "../Home/Home.css";
 import NavBar from "../NavBar/NavBar";
+import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 
 type ElencoType = {
   nome: string;
@@ -66,7 +67,7 @@ export default function FilmesDetalhes() {
     fetchFilme();
   }, [id]);
 
-  if (!filme) return <p className="loading">Carregando...</p>;
+  if (!filme) return <LoadingSpinner color="#3b82f6" size="large" />;
 
   return (
     <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>

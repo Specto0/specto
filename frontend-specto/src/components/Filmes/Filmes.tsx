@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../NavBar/NavBar";
+import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import "../Home/Home.css";
 import "./Filmes.css";
 
@@ -17,6 +18,7 @@ const Filmes: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [toggleDarkMode, setToggleDarkMode] = useState(true);
   const [movies, setMovies] = useState<Filme[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"az" | "za" | "anoC" | "anoD">("az");
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,6 +35,7 @@ const Filmes: React.FC = () => {
 
   // Fetch filmes
   useEffect(() => {
+    setLoading(true);
     fetch("http://127.0.0.1:8000/filmes/populares")
       .then((response) => {
         if (!response.ok) throw new Error("Erro na resposta da API");
@@ -56,7 +59,8 @@ const Filmes: React.FC = () => {
 
         setMovies(filmesUnicos);
       })
-      .catch((error) => console.error("Erro ao carregar filmes:", error));
+      .catch((error) => console.error("Erro ao carregar filmes:", error))
+      .finally(() => setLoading(false));
   }, []);
 
   // Filtros e ordenação
@@ -140,26 +144,30 @@ const Filmes: React.FC = () => {
           </select>
         </div>
 
-        <div className="grid-filmes">
-          {currentMovies.length > 0 ? (
-            currentMovies.map((movie) => (
-              <Link to={`/filme/${movie.id}`} key={movie.id} className="card">
-                <img
-                  src={
-                    movie.poster
-                      ? `https://image.tmdb.org/t/p/w500${movie.poster}`
-                      : "/imagens/placeholder.png"
-                  }
-                  alt={movie.titulo}
-                />
-                <h3>{movie.titulo}</h3>
-                {movie.ano && <p>{movie.ano}</p>}
-              </Link>
-            ))
-          ) : (
-            <p>Loading...</p>
-          )}
-        </div>
+        {loading ? (
+          <LoadingSpinner color="#3b82f6" size="large" />
+        ) : (
+          <div className="grid-filmes">
+            {currentMovies.length > 0 ? (
+              currentMovies.map((movie) => (
+                <Link to={`/filme/${movie.id}`} key={movie.id} className="card">
+                  <img
+                    src={
+                      movie.poster
+                        ? `https://image.tmdb.org/t/p/w500${movie.poster}`
+                        : "/imagens/placeholder.png"
+                    }
+                    alt={movie.titulo}
+                  />
+                  <h3>{movie.titulo}</h3>
+                  {movie.ano && <p>{movie.ano}</p>}
+                </Link>
+              ))
+            ) : (
+              <p>Nenhum filme encontrado.</p>
+            )}
+          </div>
+        )}
 
         {filteredMovies.length > moviesPerPage && (
           <div className="pagination-container">

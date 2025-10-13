@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NavBar from "../NavBar/NavBar";
 import { Link } from "react-router-dom";
+import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import "../Home/Home.css";
 import "./Series.css";
 
@@ -17,6 +18,7 @@ const Series: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [toggleDarkMode, setToggleDarkMode] = useState(true);
   const [series, setSeries] = useState<Serie[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"az" | "za" | "anoC" | "anoD">("az");
 
@@ -31,6 +33,7 @@ const Series: React.FC = () => {
   const toggleDarkTheme = () => setToggleDarkMode((prev) => !prev);
 
   useEffect(() => {
+    setLoading(true);
     fetch("http://127.0.0.1:8000/series/populares")
       .then((response) => response.json())
       .then((data) => {
@@ -53,7 +56,8 @@ const Series: React.FC = () => {
 
         setSeries(seriesUnicas);
       })
-      .catch((error) => console.error("Erro ao carregar séries:", error));
+      .catch((error) => console.error("Erro ao carregar séries:", error))
+      .finally(() => setLoading(false));
   }, []);
 
   const filteredSeries = series
@@ -134,26 +138,30 @@ const Series: React.FC = () => {
           </select>
         </div>
 
-        <div className="grid-series">
-          {currentSeries.length > 0 ? (
-            currentSeries.map((serie) => (
-              <Link to={`/serie/${serie.id}`} key={serie.id} className="card">
-                <img
-                  src={
-                    serie.poster
-                      ? `https://image.tmdb.org/t/p/w500${serie.poster}`
-                      : "/imagens/placeholder.png"
-                  }
-                  alt={serie.titulo}
-                />
-                <h3>{serie.titulo}</h3>
-                {serie.ano && <p>{serie.ano}</p>}
-              </Link>
-            ))
-          ) : (
-            <p>Loading...</p>
-          )}
-        </div>
+        {loading ? (
+          <LoadingSpinner color="#3b82f6" size="large" />
+        ) : (
+          <div className="grid-series">
+            {currentSeries.length > 0 ? (
+              currentSeries.map((serie) => (
+                <Link to={`/serie/${serie.id}`} key={serie.id} className="card">
+                  <img
+                    src={
+                      serie.poster
+                        ? `https://image.tmdb.org/t/p/w500${serie.poster}`
+                        : "/imagens/placeholder.png"
+                    }
+                    alt={serie.titulo}
+                  />
+                  <h3>{serie.titulo}</h3>
+                  {serie.ano && <p>{serie.ano}</p>}
+                </Link>
+              ))
+            ) : (
+              <p>Nenhuma série encontrada.</p>
+            )}
+          </div>
+        )}
 
         {filteredSeries.length > seriesPerPage && (
           <div className="pagination-container">
