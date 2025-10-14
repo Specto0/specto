@@ -99,7 +99,7 @@ section h2 {
 /* -------------------- Cards -------------------- */
 .card {
   flex: 0 0 auto;
-  width: 155px;
+  width: 150px;
   border-radius: 8px;
   overflow: hidden;
   text-align: center;
@@ -115,6 +115,8 @@ section h2 {
   font-size: 14px;
   padding: 5px;
 }
+
+
 
 /* -------------------- Mensagens -------------------- */
 
@@ -148,9 +150,25 @@ p {
   transition: background 0.3s, color 0.3s;
  }
 
+ .home-container.light .card:hover {
+  transform: scale(1.05);
+  transition: transform 0.5s, box-shadow 0.5s;
+ }
+
  .home-container.light .navbar {
   background: var(--navbar-bg, #dfe9f0);
-  transition: background 0.3s, color 0.3s;
+}
+
+.home-container.light .btns-secondary {
+  color: #000000;
+}
+
+.home-container.light .btns-secondary:hover {
+  background: rgba(59, 100, 246, 0.5);
+  box-shadow: 0 4px 15px rgba(59, 100, 246, 0.5);
+  transform: translateY(-2px);
+  transition: all 0.5s;
+  border: 5px;
 }
 
  /* DarkMode */
@@ -177,12 +195,25 @@ p {
  }
 
  .home-container.dark .card:hover {
-  
+  transform: scale(1.05);
+  transition: transform 0.5s, box-shadow 0.5s;
  }
 
 .home-container.dark .navbar {
   background: var(--navbar-bg, #03162c);
   transition: background 0.3s, color 0.3s;
+}
+
+.home-container.dark .btns-secondary {
+  color: #fff;
+}
+
+.home-container.dark .btns-secondary:hover {
+  background: rgba(59, 100, 246, 0.5);
+  box-shadow: 0 4px 15px rgba(59, 100, 246, 0.5);
+  transform: translateY(-2px);
+  transition: all 0.5s;
+  border: 5px;
 }
 
 

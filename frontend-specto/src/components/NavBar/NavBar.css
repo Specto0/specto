@@ -14,7 +14,7 @@
   align-items: center;
   gap: 12px;
   flex: 1;
-  max-width: 600px;
+  max-width: 1000px;
 }
 
 /*  SEARCH BOX UPDATE */
@@ -32,6 +32,9 @@
   box-shadow: 
     0 4px 15px rgba(0, 123, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  
+  
 }
 
 /* Blue border on focus */
@@ -66,10 +69,6 @@
 .search-box:hover,
 .search-box:focus-within {
   transform: translateY(-2px);
-  box-shadow: 
-/*    0 8px 25px rgba(59, 130, 246, 0.3),*/
-/*  0 0 30px rgba(59, 130, 246, 0.2), */
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .search-box:focus-within::before {
@@ -132,6 +131,7 @@
 .navbar-input:focus {
   color: #ffffff;
   text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+
 }
 
 /* Container para os botões */
@@ -152,26 +152,39 @@
   transition: all 0.2s ease;
 }
 
-.btn-primary {
-  background-color: #007bff;
-  color: #fff;
+.btn-home {
+  background: transparent;
+  width: 150px;
+  height: auto;
+  border: none;
 }
 
-.btn-primary:hover {
-  background-color: #0069d9;
-}
-.btn-danger {
-  background-color: #dc3545;
-  color: #fff;
+.btn-home:focus {
+  border:none;
+  outline: none;
 }
 
-.btn-danger:hover {
-  background-color: #b02a37;
+.logo-specto {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.btns-secondary {
+  background: transparent;
+  border: 2px;
+  height: auto;
+}
+
+.btns-secondary:focus {
+  border:none;
+  outline: none;
 }
 
 /* Toggle Dark/Light */
 .toggle-container {
-  margin-left: 16px;
+  margin-left: 850px;
+  margin-right: 10px;
 }
 
 .switch {

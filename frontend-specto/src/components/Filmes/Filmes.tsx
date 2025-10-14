@@ -5,7 +5,7 @@ import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import "../Home/Home.css";
 import "./Filmes.css";
 
-export type Filme = {
+export type Filme = {     // Corriger Types.
   id: number;
   titulo: string;
   poster: string | null;
@@ -44,11 +44,11 @@ const Filmes: React.FC = () => {
       .then((data) => {
         const filmesArray = Array.isArray(data.results) ? data.results : data;
 
-        const filmesFormatados: Filme[] = filmesArray.map((f: any) => ({
+        const filmesFormatados: Filme[] = filmesArray.map((f: Filme) => ({
           id: f.id,
-          titulo: f.title || f.titulo || "Sem título",
-          poster: f.poster_path || f.poster || null,
-          ano: f.release_date ? parseInt(f.release_date.split("-")[0]) : undefined,
+          titulo: f.titulo || f.titulo || "Sem título",
+          poster: f.poster|| f.poster || null,
+          ano: f.ano ? parseInt(f.ano.split("-")[0]) : undefined, // Corriger Types.
           tipo: "filme",
         }));
 

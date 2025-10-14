@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import "./Home.css";
 import NavBar from "../NavBar/NavBar.tsx";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner.tsx";
+import "../NavBar/NavBar.css";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
 
 export type ItemMedia = {
   id: number;
@@ -23,17 +26,17 @@ export default function Home() {
   const [seriesOnAir, setSeriesOnAir] = useState<ItemMedia[]>([]);
   const [seriesTopRated, setSeriesTopRated] = useState<ItemMedia[]>([]);
 
-  const mapFilme = (f: any): ItemMedia => ({
+  const mapFilme = (f: ItemMedia): ItemMedia => ({
     id: f.id,
-    titulo: f.titulo ?? f.title,
-    poster: f.poster ?? f.poster_path,
+    titulo: f.titulo ?? f.titulo,
+    poster: f.poster ?? f.poster,
     tipo: "filme",
   });
 
-  const mapSerie = (s: any): ItemMedia => ({
+  const mapSerie = (s: ItemMedia): ItemMedia => ({
     id: s.id,
-    titulo: s.titulo ?? s.name,
-    poster: s.poster ?? s.poster_path,
+    titulo: s.titulo ?? s.titulo,
+    poster: s.poster ?? s.poster,
     tipo: "serie",
   });
 
@@ -103,13 +106,23 @@ export default function Home() {
   };
 
   const renderCarrossel = (items: ItemMedia[]) => {
-    if (!items || items.length === 0) return null;
+  if (!items || items.length === 0) return null;
 
-    return (
-      <div className="carousel">
-        {items.map(item => (
+  return ( 
+    <Swiper
+      spaceBetween={10}
+      slidesPerView={5}
+      loop={true}
+      grabCursor={true}
+      breakpoints={{
+        320: { slidesPerView: 2 },
+        640: { slidesPerView: 3 },
+        1024: { slidesPerView: 5 },
+      }}
+    >
+      {items.map((item) => (
+        <SwiperSlide key={item.id}>
           <Link
-            key={item.id}
             to={item.tipo === "filme" ? `/filme/${item.id}` : `/serie/${item.id}`}
             className="card"
           >
@@ -123,10 +136,11 @@ export default function Home() {
             />
             <h3>{item.titulo}</h3>
           </Link>
-        ))}
-      </div>
-    );
-  };
+        </SwiperSlide>
+      ))}
+    </Swiper>
+  );
+};
 
   const [toggleDarkMode, setToggleDarkMode] = useState(true);
   const toggleDarkTheme = () => setToggleDarkMode(!toggleDarkMode);

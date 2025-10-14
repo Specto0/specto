@@ -5,6 +5,7 @@
     "@mui/material": "^7.3.4",
     "python3": "^0.0.1",
     "react-router-dom": "^7.9.3",
+    "swiper": "^12.0.2",
     "uvicorn": "^0.0.1-security",
     "vite": "^7.1.9"
   },

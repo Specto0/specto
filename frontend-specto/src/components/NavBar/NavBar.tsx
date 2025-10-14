@@ -1,6 +1,7 @@
 import React from "react";
 import "./NavBar.css";
 import { useNavigate } from "react-router-dom";
+import "../Home/Home.css";
 
 type NavBarProps = {
   query: string;
@@ -28,28 +29,38 @@ export default function NavBar({
         <button
           type="button"
           onClick={() => navigate("/home")}
-          className="btn btn-secondary"
-        >
-          Home
+          className="btn-home"
+          >
+          <img
+          src={
+            toggleDarkMode
+              ? "/assets/images/spectologo.png" // imagem para dark mode
+              : "/assets/images/spectologodark1.png"      // imagem normal
+          }
+          alt="Specto logo"
+          className="logo-specto"
+        />
         </button>
+
+       
         <button
           type="button"
           onClick={() => navigate("/filmes")}
-          className="btn btn-secondary"
+          className="btns-secondary"
         >
           Filmes  
         </button>
         <button
           type="button"
           onClick={() => navigate("/series")}
-          className="btn btn-secondary"
+          className="btns-secondary"
         >
           Séries
         </button>
         <button
           type="button"
           onClick={() => navigate("/favoritos")}
-          className="btn btn-secondary"
+          className="btns-secondary"
         >
           Favoritos
         </button>

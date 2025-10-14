@@ -39,11 +39,11 @@ const Series: React.FC = () => {
       .then((data) => {
         const seriesArray = Array.isArray(data.results) ? data.results : data;
 
-        const seriesFormatadas: Serie[] = seriesArray.map((s: any) => ({
+        const seriesFormatadas: Serie[] = seriesArray.map((s: Serie) => ({
           id: s.id,
-          titulo: s.titulo || s.title || "Sem título",
-          poster: s.poster_path || s.poster|| null,
-          ano: s.release_date
+          titulo: s.titulo || s.titulo || "Sem título",
+          poster: s.poster || s.poster|| null,
+          ano: s.ano
               ? parseInt(s.release_date.split("-")[0])
               : undefined,
           tipo: "serie",
