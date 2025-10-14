@@ -4,8 +4,6 @@ import "./Home.css";
 import NavBar from "../NavBar/NavBar.tsx";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner.tsx";
 import "../NavBar/NavBar.css";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
 
 export type ItemMedia = {
   id: number;
@@ -40,9 +38,8 @@ export default function Home() {
     tipo: "serie",
   });
 
-  // Busca inicial para mostrar seções padrão
   useEffect(() => {
-    if (searching) return; // Não carrega se estiver pesquisando
+    if (searching) return;
     setLoading(true);
 
     const endpoints = [
@@ -69,7 +66,6 @@ export default function Home() {
       });
   }, [searching]);
 
-  // Função de pesquisa
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -86,7 +82,6 @@ export default function Home() {
         setFilmesPopulares(filmes);
         setSeriesPopulares(series);
 
-        // Limpa seções padrão enquanto pesquisa está ativa
         setFilmesNowPlaying([]);
         setFilmesTopRated([]);
         setSeriesOnAir([]);
@@ -105,24 +100,14 @@ export default function Home() {
     setSearching(false);
   };
 
-  const renderCarrossel = (items: ItemMedia[]) => {
-  if (!items || items.length === 0) return null;
+   const renderCarrossel = (items: ItemMedia[]) => {
+    if (!items || items.length === 0) return null;
 
-  return ( 
-    <Swiper
-      spaceBetween={10}
-      slidesPerView={5}
-      loop={true}
-      grabCursor={true}
-      breakpoints={{
-        320: { slidesPerView: 2 },
-        640: { slidesPerView: 3 },
-        1024: { slidesPerView: 5 },
-      }}
-    >
-      {items.map((item) => (
-        <SwiperSlide key={item.id}>
+  return (
+      <div className="carousel">
+        {items.map(item => (
           <Link
+            key={item.id}
             to={item.tipo === "filme" ? `/filme/${item.id}` : `/serie/${item.id}`}
             className="card"
           >
@@ -136,11 +121,10 @@ export default function Home() {
             />
             <h3>{item.titulo}</h3>
           </Link>
-        </SwiperSlide>
-      ))}
-    </Swiper>
-  );
-};
+        ))}
+      </div>
+    );
+  };
 
   const [toggleDarkMode, setToggleDarkMode] = useState(true);
   const toggleDarkTheme = () => setToggleDarkMode(!toggleDarkMode);
