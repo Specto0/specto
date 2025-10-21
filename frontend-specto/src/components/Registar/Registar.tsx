@@ -1,226 +1,190 @@
 import "./Registar.css";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
-interface SignUpFormData { 
-    username: string;
-    email: string;
-    password: string;
+interface SignUpFormData {
+  username: string;
+  email: string;
+  password: string;
 }
 
+type FieldErrors = {
+  username?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  global?: string;
+};
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 export default function Registar() {
-  
-  // Stores the main form data (username, email, password)
+  const navigate = useNavigate();
+
   const [formData, setFormData] = React.useState<SignUpFormData>({
-    username: '',
-    email: '',
-    password: '',
+    username: "",
+    email: "",
+    password: "",
   });
-
-  // Stores the password confirmation input
-  const [confirmPassword, setConfirmPassword] = React.useState<string>('');
-
-  // Controls whether passwords are visible or hidden
-  const [showPassword, setShowPassword] = React.useState<boolean>(false);
-
-  // Stores validation errors for each field
-  const [errors, setErrors] = React.useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-
-  // Controls submit button state (loading/disabled)
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [errors, setErrors] = React.useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
 
-
-  // Validates email format using regex pattern
-  const isValidEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  // Validates password length (minimum 6 characters)
-  const isValidPassword = (password: string) => {
-    return password.length >= 6;
-  };
-
-  // Validates username (minimum 3 characters, no spaces)
-  const isValidUsername = (username: string) => {
-    return username.length >= 3 && !/\s/.test(username);
-  };
-
-  // Returns password strength: 'Fraca', 'Média', or 'Forte'
+  // Helpers de validação
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidPassword = (password: string) => password.length >= 6;
+  const isValidUsername = (username: string) => username.length >= 3 && !/\s/.test(username);
   const getPasswordStrength = (password: string) => {
-    if (password.length < 6) return 'Fraca';
-    if (password.length < 10) return 'Média';
-    if (/[A-Z]/.test(password) && /[0-9]/.test(password)) return 'Forte';
-    return 'Média';
+    if (password.length < 6) return "Fraca";
+    if (password.length < 10) return "Média";
+    if (/[A-Z]/.test(password) && /[0-9]/.test(password)) return "Forte";
+    return "Média";
   };
-  
-  // Handles input changes and updates form state
+
+  const setFieldError = (name: keyof FieldErrors, message: string) =>
+    setErrors((prev) => ({ ...prev, [name]: message }));
+
+  // onChange
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    // Update form data
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-
-    // Clear error when user starts typing (gives immediate feedback)
-    if (errors[name as keyof typeof errors]) {
-      setErrors({
-        ...errors,
-        [name]: '',
-      });
+    setFormData((s) => ({ ...s, [name]: value }));
+    if (errors[name as keyof FieldErrors]) {
+      setFieldError(name as keyof FieldErrors, "");
     }
   };
 
-  // Validates field when user leaves it (onBlur)
+  // onBlur
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    let errorMessage = '';
-
-    // Validate based on field name
-    switch (name) {
-      case 'username':
-        if (!isValidUsername(value)) {
-          errorMessage = 'Username deve ter pelo menos 3 caracteres e sem espaços.';
-        }
-        break;
-      case 'email':
-        if (!isValidEmail(value)) {
-          errorMessage = 'Email inválido.';
-        }
-        break;
-      case 'password':
-        if (!isValidPassword(value)) {
-          errorMessage = 'Password deve ter pelo menos 6 caracteres.';
-        }
-        break;
-      case 'confirmPassword':
-        if (value !== formData.password) {
-          errorMessage = 'As passwords não coincidem.';
-        }
-        break;
+    let msg = "";
+    if (name === "username" && !isValidUsername(value)) {
+      msg = "Username deve ter pelo menos 3 caracteres e sem espaços.";
+    } else if (name === "email" && !isValidEmail(value)) {
+      msg = "Email inválido.";
+    } else if (name === "password" && !isValidPassword(value)) {
+      msg = "Password deve ter pelo menos 6 caracteres.";
+    } else if (name === "confirmPassword" && value !== formData.password) {
+      msg = "As passwords não coincidem.";
     }
-
-    // Update error state
-    setErrors({
-      ...errors,
-      [name]: errorMessage,
-    });
+    if (msg) setFieldError(name as keyof FieldErrors, msg);
   };
 
-  // Handles form submission and validates all fields
+  // submit
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevents page reload
-    
-    // Disable button during submission
-    setIsSubmitting(true);
+    e.preventDefault();
+    if (isSubmitting) return;
 
-    console.log("Form submitted:");
-    console.log("Form data:", formData);
+    // validação client-side
+    const newErrors: FieldErrors = {};
+    if (!isValidUsername(formData.username)) newErrors.username = "Username deve ter pelo menos 3 caracteres e sem espaços.";
+    if (!isValidEmail(formData.email)) newErrors.email = "Email inválido.";
+    if (!isValidPassword(formData.password)) newErrors.password = "Password deve ter pelo menos 6 caracteres.";
+    if (confirmPassword !== formData.password) newErrors.confirmPassword = "As passwords não coincidem.";
 
-    // Validate all fields
-    const isEmailValid = isValidEmail(formData.email);
-    const isPasswordValid = isValidPassword(formData.password);
-    const doPasswordsMatch = formData.password === confirmPassword;
-    const isUsernameValid = isValidUsername(formData.username);
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
-    console.log(" Valid Email?", isEmailValid);
-    console.log(" Valid Password?", isPasswordValid);
-    console.log(" Passwords Match?", doPasswordsMatch);
-    console.log(" Valid Username?", isUsernameValid);
+    try {
+      setIsSubmitting(true);
+      setSuccessMsg(null);
+      setFieldError("global", "");
 
-    // Check if all validations pass
-    if (isEmailValid && isPasswordValid && doPasswordsMatch && isUsernameValid) {
-      console.log("✅ Formulário válido! A enviar...");
-      
-      // Simulate API call (remove this and add your real API call)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log("✅ Registo concluído!");
-    } else {
-      console.log("❌ Formulário inválido!");
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      if (res.status === 201) {
+        // sucesso
+        setSuccessMsg("Conta criada com sucesso! A redirecionar para login…");
+        setTimeout(() => navigate("/login"), 800); // pequeno delay para feedback
+        return;
+      }
+
+      // erros comuns do backend
+      const text = await res.text();
+      let detail: string | undefined;
+      try {
+        const json = JSON.parse(text);
+        detail = json?.detail;
+      } catch {
+        // body não era JSON; fica o texto cru
+        detail = text;
+      }
+
+      if (res.status === 400) {
+        // no nosso backend devolvemos: "Username já existe." OU "Email já existe."
+        if (detail?.toLowerCase().includes("username")) setFieldError("username", detail);
+        else if (detail?.toLowerCase().includes("email")) setFieldError("email", detail);
+        else setFieldError("global", detail || "Pedido inválido.");
+      } else if (res.status === 422) {
+        setFieldError("global", "Dados inválidos. Verifica o formulário.");
+      } else {
+        setFieldError("global", detail || `Erro inesperado (${res.status}).`);
+      }
+    } catch (err) {
+      setFieldError("global", "Falha de rede. Tenta novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Re-enable button after submission
-    setIsSubmitting(false);
   };
 
   return (
     <div className="register-container">
-      <img 
-        src="/assets/images/spectologo.png" 
-        alt="Specto Logo" 
-        className="register-logo"
-      />
+      <img src="/assets/images/spectologo.png" alt="Specto Logo" className="register-logo" />
       <div className="register-box">
         <h2 className="register-title">Join Specto</h2>
         <p>Create your account to get started.</p>
 
+        {errors.global && <div className="error global-error">{errors.global}</div>}
+        {successMsg && <div className="success global-success">{successMsg}</div>}
+
         <form onSubmit={handleSubmit}>
-          {/* Username input field */}
+          {/* Username */}
           <div className="input-group">
             <label htmlFor="username">Nome de Utilizador:</label>
             <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              required
+              type="text" id="username" name="username"
+              value={formData.username} onChange={handleChange} onBlur={handleBlur} required
             />
             {errors.username && <span className="error">{errors.username}</span>}
           </div>
 
-          {/* Email input field */}
+          {/* Email */}
           <div className="input-group">
             <label htmlFor="email">Email:</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              required
+              type="email" id="email" name="email"
+              value={formData.email} onChange={handleChange} onBlur={handleBlur} required
             />
             {errors.email && <span className="error">{errors.email}</span>}
           </div>
 
-          {/* Password input field - type changes based on showPassword state */}
+          {/* Password */}
           <div className="input-group">
             <label htmlFor="password">Palavra-passe:</label>
             <div className="password-input-wrapper">
               <input
                 type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                required
+                id="password" name="password"
+                value={formData.password} onChange={handleChange} onBlur={handleBlur} required
               />
               <button
-                type="button"
-                className="toggle-password-icon"
+                type="button" className="toggle-password-icon"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
               >
                 {showPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 )}
               </button>
             </div>
@@ -232,54 +196,38 @@ export default function Registar() {
             )}
           </div>
 
-          {/* Confirm password input field */}
+          {/* Confirm password */}
           <div className="input-group">
             <label htmlFor="confirmPassword">Confirmar Palavra-passe:</label>
             <div className="password-input-wrapper">
               <input
                 type={showPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
+                id="confirmPassword" name="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
-                  // Clear error when user starts typing
-                  if (errors.confirmPassword) {
-                    setErrors({ ...errors, confirmPassword: '' });
-                  }
+                  if (errors.confirmPassword) setFieldError("confirmPassword", "");
                 }}
-                onBlur={handleBlur}
-                required
+                onBlur={handleBlur} required
               />
               <button
-                type="button"
-                className="toggle-password-icon"
+                type="button" className="toggle-password-icon"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
               >
+                {/* mesmo ícone que acima */}
                 {showPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 )}
               </button>
             </div>
             {errors.confirmPassword && <span className="error">{errors.confirmPassword}</span>}
           </div>
 
-          {/* Submit button - triggers handleSubmit function */}
-          <button 
-            type="submit" 
-            className="register-button"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'A registar...' : 'Registar'}
+          <button type="submit" className="register-button" disabled={isSubmitting}>
+            {isSubmitting ? "A registar..." : "Registar"}
           </button>
         </form>
 
