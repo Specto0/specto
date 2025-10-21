@@ -1,58 +1,109 @@
+/* ========================================
+   🎨 REGISTER CONTAINER
+   ======================================== */
 
 .register-container {
   min-height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;      /* ← CENTRA HORIZONTALMENTE */
-  justify-content: center;  /* ← CENTRA VERTICALMENTE */
+  align-items: center;
+  justify-content: center;
   background-color: #03162c;
   padding: 40px 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.register-container h2 {
+/* ========================================
+   🎭 SPECTO LOGO
+   ======================================== */
+
+.register-logo {
+  width: 180px;
+  height: auto;
+  margin-bottom: 30px;
+  filter: drop-shadow(0 4px 12px rgba(229, 9, 20, 0.4));
+  animation: fadeInDown 0.8s ease;
+  transition: transform 0.3s ease;
+}
+
+.register-logo:hover {
+  transform: scale(1.05);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.register-title {
   color: #fff;
   font-size: 32px;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   text-align: center;
   border-left: 4px solid #e50914;
   padding-left: 15px;
   text-shadow: 0 2px 10px rgba(229,9,20,0.3);
-  width: 100%;
-  max-width: 450px;  /* ← MESMA LARGURA DO FORMULÁRIO */
 }
 
-.register-form {
+.register-box {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   padding: 40px;
   border-radius: 16px;
   width: 100%;
   max-width: 450px;
   box-shadow:
-  0 8px 24px rgba(0, 123, 255, 0.2),
-  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 8px 24px rgba(0, 123, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   border: 2px solid rgba(59, 130, 246, 0.2);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  animation: fadeInUp 0.6s ease;
+}
 
+.register-box p {
+  color: #e0e7ff;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.register-box p a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.register-box p a:hover {
+  color: #60a5fa;
+  text-decoration: underline;
 }
 
 /* ========================================
-   INPUTS & LABELS
+   📝 INPUT GROUPS
    ======================================== */
 
-.register-form label {
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.input-group label {
   color: #e0e7ff;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: -10px;
   letter-spacing: 0.5px;
 }
 
-.register-form input {
- padding: 14px 18px;
+.input-group input {
+  padding: 14px 18px;
   border: 2px solid rgba(100, 116, 139, 0.3);
   border-radius: 10px;
   font-size: 16px;
@@ -62,11 +113,11 @@
   font-family: inherit;
 }
 
-.register-form input::placeholder {
+.input-group input::placeholder {
   color: #64748b;
 }
 
-.register-form input:focus {
+.input-group input:focus {
   outline: none;
   border-color: #3b82f6;
   background: rgba(30, 41, 59, 0.8);
@@ -74,22 +125,82 @@
   transform: translateY(-2px);
 }
 
-.register-form input:hover {
+.input-group input:hover {
   border-color: rgba(59, 130, 246, 0.5);
 }
 
-.register-form input:invalid:not(:placeholder-shown) {
-  border-color: #f44336;
+/* ========================================
+   👁️ PASSWORD INPUT WITH EYE ICON
+   ======================================== */
+
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding: 14px 50px 14px 18px; /* Right padding for eye icon */
+  border: 2px solid rgba(100, 116, 139, 0.3);
+  border-radius: 10px;
+  font-size: 16px;
+  background: rgba(30, 41, 59, 0.5);
+  color: #fff;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-sizing: border-box; /* Include padding and border in width calculation */
+}
+
+.password-input-wrapper input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(30, 41, 59, 0.8);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.password-input-wrapper input:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.toggle-password-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.toggle-password-icon:hover {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.toggle-password-icon:active {
+  transform: scale(0.95);
+}
+
+.toggle-password-icon svg {
+  display: block;
 }
 
 /* ========================================
-   ERROR MESSAGES
+   ❌ ERROR MESSAGES
    ======================================== */
 
 .error {
   color: #ff6b6b;
   font-size: 13px;
-  margin-top: -10px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -108,17 +219,17 @@
 }
 
 /* ========================================
-    PASSWORD STRENGTH INDICATOR
+   💪 PASSWORD STRENGTH INDICATOR
    ======================================== */
 
 .password-strength {
   font-size: 13px;
   font-weight: 600;
-  margin-top: -10px;
   padding: 8px 12px;
   border-radius: 6px;
   display: inline-block;
   animation: slideIn 0.3s ease;
+  margin-top: 5px;
 }
 
 @keyframes slideIn {
@@ -150,14 +261,12 @@
   border-left: 3px solid #51cf66;
 }
 
-
-
 /* ========================================
    🔘 BUTTONS
    ======================================== */
 
-
-.register-form button {
+.register-button {
+  width: 100%;
   padding: 14px 24px;
   border: none;
   border-radius: 10px;
@@ -166,68 +275,76 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-family: inherit;
-}
-
-/* Botão de Submit (Registar) */
-.register-form button[type="submit"] {
   background: linear-gradient(135deg, #e50914 0%, #f6121d 100%);
   color: #fff;
   margin-top: 10px;
   box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
 }
 
-.register-form button[type="submit"]:hover:not(:disabled) {
+.register-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #f6121d 0%, #ff1a24 100%);
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(229, 9, 20, 0.5);
 }
 
-.register-form button[type="submit"]:active:not(:disabled) {
+.register-button:active:not(:disabled) {
   transform: translateY(-1px);
 }
 
-.register-form button[type="submit"]:disabled {
+.register-button:disabled {
   background: #444;
   cursor: not-allowed;
   opacity: 0.5;
   box-shadow: none;
 }
 
-.register-form button[type="submit"].submitting {
-  animation: pulse 1.5s infinite;
-}
 
-@keyframes pulse {
-  0%, 100% { 
+
+/* ========================================
+   ✨ ANIMATIONS
+   ======================================== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
     opacity: 1;
-    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
-  }
-  50% { 
-    opacity: 0.8;
-    box-shadow: 0 4px 25px rgba(229, 9, 20, 0.6);
+    transform: translateY(0);
   }
 }
 
-/* Botão de Toggle Password */
-.register-form button[type="button"] {
-  background: rgba(100, 116, 139, 0.2);
-  color: #e0e7ff;
-  border: 2px solid rgba(100, 116, 139, 0.3);
+/* ========================================
+   🔗 LOGIN LINK (at bottom)
+   ======================================== */
+.login-link {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.register-form button[type="button"]:hover {
-  background: rgba(100, 116, 139, 0.3);
-  border-color: #3b82f6;
-  transform: translateY(-2px);
+.login-link p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 0;
 }
 
+.login-link a {
+  color: #e50914;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.login-link a:hover {
+  color: #f6121d;
+  text-decoration: underline;
+}
 
 /* ========================================
    📱 RESPONSIVE
-   ======================================== */
-
-/* ========================================
-   📱 RESPONSIVIDADE
    ======================================== */
 
 @media (max-width: 768px) {
@@ -235,26 +352,37 @@
     padding: 20px 15px;
   }
   
-  .register-form {
+  .register-logo {
+    width: 150px;
+    margin-bottom: 25px;
+  }
+  
+  .register-box {
     padding: 30px 20px;
   }
   
-  .register-container h2 {
+  .register-title {
     font-size: 26px;
   }
 }
 
 @media (max-width: 480px) {
-  .register-form {
+  .register-logo {
+    width: 120px;
+    margin-bottom: 20px;
+  }
+  
+  .register-box {
     padding: 25px 15px;
   }
   
-  .register-container h2 {
+  .register-title {
     font-size: 22px;
   }
   
-  .register-form input,
-  .register-form button {
+  .input-group input,
+  .register-button,
+  .toggle-password-button {
     font-size: 14px;
   }
 }

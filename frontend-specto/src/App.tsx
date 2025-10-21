@@ -5,6 +5,7 @@ import SeriesDetalhes from "./components/Detalhes/SeriesDetalhes";
 import Filmes from "./components/Filmes/Filmes";       
 import Series from "./components/Series/Series";
 import Registar from "./components/Registar/Registar";
+import Login from "./components/Login/Login";
 
 
 
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/favoritos" element={<Home />} />
         <Route path="/perfil" element={<Home />} />
         <Route path="/Registar" element={<Registar />} />
+        <Route path="/Login" element={<Login />} />
         <Route path="*" element={<Home />} />
         
       </Routes>
