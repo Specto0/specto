@@ -24,17 +24,17 @@ export default function Home() {
   const [seriesOnAir, setSeriesOnAir] = useState<ItemMedia[]>([]);
   const [seriesTopRated, setSeriesTopRated] = useState<ItemMedia[]>([]);
 
-  const mapFilme = (f: ItemMedia): ItemMedia => ({
+  const mapFilme = (f: any): ItemMedia => ({
     id: f.id,
-    titulo: f.titulo ?? f.titulo,
-    poster: f.poster ?? f.poster,
+    titulo: f.titulo ?? f.title,
+    poster: f.poster ?? f.poster_path,
     tipo: "filme",
   });
 
-  const mapSerie = (s: ItemMedia): ItemMedia => ({
+  const mapSerie = (s: any): ItemMedia => ({
     id: s.id,
-    titulo: s.titulo ?? s.titulo,
-    poster: s.poster ?? s.poster,
+    titulo: s.titulo ?? s.name,
+    poster: s.poster ?? s.poster_path,
     tipo: "serie",
   });
 
@@ -76,8 +76,24 @@ export default function Home() {
     fetch(`http://127.0.0.1:8000/pesquisa?query=${encodeURIComponent(query)}`)
       .then(res => res.json())
       .then(data => {
-        const filmes = Array.isArray(data.filmes) ? data.filmes.map(mapFilme) : [];
-        const series = Array.isArray(data.series) ? data.series.map(mapSerie) : [];
+        // API formats responses differently, handle both cases
+        const filmes = Array.isArray(data.filmes) 
+          ? data.filmes.map((f: any) => ({
+              id: f.id,
+              titulo: f.title || f.titulo,
+              poster: f.poster_path || f.poster,
+              tipo: "filme" as const,
+            }))
+          : [];
+        
+        const series = Array.isArray(data.series) 
+          ? data.series.map((s: any) => ({
+              id: s.id,
+              titulo: s.name || s.titulo,
+              poster: s.poster_path || s.poster,
+              tipo: "serie" as const,
+            }))
+          : [];
 
         setFilmesPopulares(filmes);
         setSeriesPopulares(series);

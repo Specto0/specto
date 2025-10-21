@@ -14,7 +14,7 @@
   align-items: center;
   gap: 12px;
   flex: 1;
-  max-width: 1000px;
+  max-width: 100%;  
 }
 
 /*  SEARCH BOX UPDATE */
@@ -183,7 +183,7 @@
 
 /* Toggle Dark/Light */
 .toggle-container {
-  margin-left: 850px;
+  margin-left: 550px;
   margin-right: 10px;
 }
 
