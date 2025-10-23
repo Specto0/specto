@@ -76,7 +76,7 @@ export default function Login() {
       });
 
       if (!response.ok) {
-        let message = "Credenciais inválidas";
+        let message = "Dados inválidos";
         try {
           const err = await response.json();
           message = err.detail || err.message || JSON.stringify(err);
@@ -94,11 +94,12 @@ export default function Login() {
 
       // Redireciona
       navigate("/Home");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erro no login:", err);
+      const errorMessage = err instanceof Error ? err.message : "Erro ao tentar iniciar sessão.";
       setErrors((prev) => ({
         ...prev,
-        general: err?.message || "Erro ao tentar iniciar sessão.",
+        general: errorMessage,
       }));
     } finally {
       setIsSubmitting(false);

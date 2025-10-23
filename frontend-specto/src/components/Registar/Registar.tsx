@@ -104,7 +104,7 @@ export default function Registar() {
       if (res.status === 201) {
         // sucesso
         setSuccessMsg("Conta criada com sucesso! A redirecionar para login…");
-        setTimeout(() => navigate("/login"), 800); // pequeno delay para feedback
+        setTimeout(() => navigate("/login"), 500); // pequeno delay para feedback
         return;
       }
 
@@ -129,8 +129,9 @@ export default function Registar() {
       } else {
         setFieldError("global", detail || `Erro inesperado (${res.status}).`);
       }
-    } catch (err) {
-      setFieldError("global", "Falha de rede. Tenta novamente.");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Falha de rede. Tenta novamente.";
+      setFieldError("global", errorMessage);
     } finally {
       setIsSubmitting(false);
     }
