@@ -9,6 +9,9 @@ type ElencoType = { nome: string; personagem?: string; foto?: string | null };
 type ReviewType = { autor: string; conteudo: string };
 type VideoType = { tipo: string; site: string; chave: string };
 
+const ATOR_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='300' viewBox='0 0 200 300'%3E%3Crect width='200' height='300' rx='16' fill='%23222636'/%3E%3Ccircle cx='100' cy='120' r='50' fill='%2336475f'/%3E%3Cpath d='M40 240c5-48 45-80 60-80s55 32 60 80' fill='%2336475f'/%3E%3Ctext x='100' y='270' text-anchor='middle' font-family='Arial' font-size='26' fill='%23cbd5f5'%3ESem foto%3C/text%3E%3C/svg%3E";
+
 type SerieDetalhesType = {
   id: number;
   titulo: string;
@@ -53,6 +56,9 @@ export default function SeriesDetalhes() {
   const [isSavingVisto, setIsSavingVisto] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [wasAdded, setWasAdded] = useState(false);
+  const [vistoId, setVistoId] = useState<number | null>(null);
+  const [modalMessage, setModalMessage] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const handleStorage = () => setIsAuthenticated(!!localStorage.getItem("token"));
@@ -65,6 +71,25 @@ export default function SeriesDetalhes() {
     const timeout = window.setTimeout(() => setFeedback(null), 4000);
     return () => window.clearTimeout(timeout);
   }, [feedback]);
+
+  useEffect(() => {
+    if (!showModal) return;
+    const timeout = window.setTimeout(() => {
+      setShowModal(false);
+      setModalMessage(null);
+    }, 2500);
+    return () => window.clearTimeout(timeout);
+  }, [showModal]);
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalMessage(null);
+  };
+
+  const openModal = (message: string) => {
+    setModalMessage(message);
+    setShowModal(true);
+  };
 
   // Fetch dos detalhes da série
   useEffect(() => {
@@ -89,6 +114,7 @@ export default function SeriesDetalhes() {
   useEffect(() => {
     if (!serie || !isAuthenticated) {
       setWasAdded(false);
+      setVistoId(null);
       return;
     }
 
@@ -110,10 +136,12 @@ export default function SeriesDetalhes() {
       })
       .then((data) => {
         if (!data) return;
-        const jaVisto = Array.isArray(data.series)
-          ? data.series.some((item: any) => item.tmdb_id === serie.id)
-          : false;
-        setWasAdded(jaVisto);
+        const seriesVistas = Array.isArray(data.series) ? data.series : [];
+        const existente = seriesVistas.find(
+          (item: any) => item && typeof item.tmdb_id === "number" && item.tmdb_id === serie.id
+        );
+        setWasAdded(!!existente);
+        setVistoId(existente && typeof existente.id === "number" ? existente.id : null);
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
@@ -181,15 +209,17 @@ export default function SeriesDetalhes() {
       }
 
       setWasAdded(true);
-      const respostaFavorito = data && data.favorito;
-      setFeedback({
-        type: "success",
-        message: respostaFavorito
+      if (data && typeof data === "object" && typeof data.id === "number") {
+        setVistoId(data.id);
+      }
+      const respostaFavorito = data && typeof data === "object" ? data.favorito : null;
+      const successMessage =
+        respostaFavorito
           ? "Está nos teus favoritos e vistos!"
           : jaEstavaAdicionado
           ? "Os teus vistos foram atualizados."
-          : "Adicionada aos teus vistos!",
-      });
+          : "Adicionada aos teus vistos!";
+      openModal(successMessage);
     } catch (err) {
       console.error("Erro ao adicionar série aos vistos:", err);
       setFeedback({
@@ -198,6 +228,66 @@ export default function SeriesDetalhes() {
           err instanceof Error
             ? err.message
             : "Erro inesperado ao adicionar aos vistos.",
+      });
+    } finally {
+      setIsSavingVisto(false);
+    }
+  };
+
+  const handleRemoverDosVistos = async () => {
+    if (!vistoId) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAuthenticated(false);
+      setFeedback({
+        type: "error",
+        message: "Precisas de iniciar sessão para removeres dos vistos.",
+      });
+      return;
+    }
+
+    setIsSavingVisto(true);
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/vistos/${vistoId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const raw = await response.text();
+        let detail: any = null;
+        if (raw) {
+          try {
+            detail = JSON.parse(raw);
+          } catch {
+            detail = raw;
+          }
+        }
+
+        const message =
+          (detail && typeof detail === "object" && (detail.detail || detail.message)) ||
+          (typeof detail === "string" ? detail : null) ||
+          "Não foi possível remover esta série dos vistos.";
+
+        throw new Error(message);
+      }
+
+      setWasAdded(false);
+      setVistoId(null);
+      openModal("Removida dos teus vistos.");
+    } catch (err) {
+      console.error("Erro ao remover série dos vistos:", err);
+      setFeedback({
+        type: "error",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao remover dos vistos.",
       });
     } finally {
       setIsSavingVisto(false);
@@ -219,6 +309,29 @@ export default function SeriesDetalhes() {
         toggleDarkMode={toggleDarkMode}
         toggleDarkTheme={toggleDarkTheme}
       />
+
+      {showModal && modalMessage && (
+        <div
+          className="detalhes-modal-overlay"
+          role="alertdialog"
+          aria-modal="true"
+          onClick={closeModal}
+        >
+          <div
+            className="detalhes-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p>{modalMessage}</p>
+            <button
+              type="button"
+              className="detalhes-modal-close"
+              onClick={closeModal}
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="detalhes-container">
         {/* Banner principal */}
@@ -300,13 +413,19 @@ export default function SeriesDetalhes() {
                       className="detalhes-cta"
                       onClick={handleAdicionarAosVistos}
                       disabled={isSavingVisto}
+                      type="button"
                     >
                       Adicionar aos vistos
                     </button>
                   ) : (
-                    <span className="detalhes-feedback sucesso">
-                      Já está nos teus vistos.
-                    </span>
+                    <button
+                      className="detalhes-cta detalhes-cta-remover"
+                      onClick={handleRemoverDosVistos}
+                      disabled={isSavingVisto}
+                      type="button"
+                    >
+                      Remover dos vistos
+                    </button>
                   )}
                   {feedback && (
                     <span
@@ -334,15 +453,18 @@ export default function SeriesDetalhes() {
           <>
             <h2 className="elenco-h2">Elenco</h2>
             <div className="elenco-grid">
-              {serie.elenco.map((ator, idx) => (
-                <div className="elenco-card" key={idx}>
-                  {ator.foto && <img src={ator.foto} alt={ator.nome} />}
-                  <p>
-                    <strong>{ator.nome}</strong>
-                  </p>
-                  {ator.personagem && <p>{ator.personagem}</p>}
-                </div>
-              ))}
+              {serie.elenco.map((ator, idx) => {
+                const fotoSrc = ator.foto || ATOR_PLACEHOLDER;
+                return (
+                  <div className="elenco-card" key={idx}>
+                    <img src={fotoSrc} alt={ator.nome} />
+                    <p>
+                      <strong>{ator.nome}</strong>
+                    </p>
+                    {ator.personagem && <p>{ator.personagem}</p>}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}

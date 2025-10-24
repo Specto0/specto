@@ -123,6 +123,17 @@
   box-shadow: none;
 }
 
+.detalhes-cta-remover {
+  background: transparent;
+  border: 2px solid #f87171;
+  color: #f87171;
+}
+
+.detalhes-cta-remover:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(248, 113, 113, 0.25);
+}
+
 .detalhes-feedback {
   font-size: 0.95rem;
   font-weight: 500;
@@ -139,6 +150,11 @@
 .home-container.light .detalhes-cta {
   background: linear-gradient(135deg, #1d4ed8, #3b82f6);
   color: #fff;
+}
+
+.home-container.light .detalhes-cta-remover {
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 /* Grid de elenco */
@@ -196,6 +212,59 @@
 /* Efeito ao passar o mouse */
 .review-card:hover {
   transform: translateY(-10px);
+}
+
+.detalhes-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 1rem;
+}
+
+.detalhes-modal {
+  background: #111827;
+  color: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  min-width: 260px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.detalhes-modal p {
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+}
+
+.detalhes-modal-close {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.detalhes-modal-close:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(37, 99, 235, 0.35);
+}
+
+.home-container.light .detalhes-modal {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 20px 50px rgba(17, 24, 39, 0.25);
+}
+
+.home-container.light .detalhes-modal-close {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
 }
 
 /* Autor da review */
@@ -278,7 +347,6 @@
 }
 
 /* -------------------- Dark/Light Mode Changes -------------------- */
-
 
 
 

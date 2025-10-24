@@ -4,12 +4,15 @@ import "./Home.css";
 import NavBar from "../NavBar/NavBar.tsx";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner.tsx";
 import "../NavBar/NavBar.css";
+import "../Perfil/Perfil.css";
 
 export type ItemMedia = {
   id: number;
   titulo: string;
   poster: string | null;
   tipo: "filme" | "serie";
+  rating?: number | null;
+  votes?: number | null;
 };
 
 export default function Home() {
@@ -24,18 +27,43 @@ export default function Home() {
   const [seriesOnAir, setSeriesOnAir] = useState<ItemMedia[]>([]);
   const [seriesTopRated, setSeriesTopRated] = useState<ItemMedia[]>([]);
 
+  const parseNumeric = (value: any): number | null => {
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  };
+
   const mapFilme = (f: any): ItemMedia => ({
     id: f.id,
-    titulo: f.titulo ?? f.title,
-    poster: f.poster ?? f.poster_path,
+    titulo: f.titulo ?? f.title ?? "Sem título",
+    poster: f.poster ?? f.poster_path ?? null,
     tipo: "filme",
+    rating:
+      parseNumeric(f.vote_average) ??
+      parseNumeric(f.nota) ??
+      parseNumeric(f.media_avaliacao),
+    votes:
+      parseNumeric(f.vote_count) ??
+      parseNumeric(f.votos),
   });
 
   const mapSerie = (s: any): ItemMedia => ({
     id: s.id,
-    titulo: s.titulo ?? s.name,
-    poster: s.poster ?? s.poster_path,
+    titulo: s.titulo ?? s.name ?? "Sem título",
+    poster: s.poster ?? s.poster_path ?? null,
     tipo: "serie",
+    rating:
+      parseNumeric(s.vote_average) ??
+      parseNumeric(s.nota) ??
+      parseNumeric(s.media_avaliacao),
+    votes:
+      parseNumeric(s.vote_count) ??
+      parseNumeric(s.votos),
   });
 
   useEffect(() => {
@@ -80,18 +108,32 @@ export default function Home() {
         const filmes = Array.isArray(data.filmes) 
           ? data.filmes.map((f: any) => ({
               id: f.id,
-              titulo: f.title || f.titulo,
-              poster: f.poster_path || f.poster,
+              titulo: f.title || f.titulo || "Sem título",
+              poster: f.poster_path || f.poster || null,
               tipo: "filme" as const,
+              rating:
+                parseNumeric(f.vote_average) ??
+                parseNumeric(f.nota) ??
+                parseNumeric(f.media_avaliacao),
+              votes:
+                parseNumeric(f.vote_count) ??
+                parseNumeric(f.votos),
             }))
           : [];
         
         const series = Array.isArray(data.series) 
           ? data.series.map((s: any) => ({
               id: s.id,
-              titulo: s.name || s.titulo,
-              poster: s.poster_path || s.poster,
+              titulo: s.name || s.titulo || "Sem título",
+              poster: s.poster_path || s.poster || null,
               tipo: "serie" as const,
+              rating:
+                parseNumeric(s.vote_average) ??
+                parseNumeric(s.nota) ??
+                parseNumeric(s.media_avaliacao),
+              votes:
+                parseNumeric(s.vote_count) ??
+                parseNumeric(s.votos),
             }))
           : [];
 
@@ -116,26 +158,47 @@ export default function Home() {
     setSearching(false);
   };
 
-   const renderCarrossel = (items: ItemMedia[]) => {
+  const posterPlaceholder =
+    "https://via.placeholder.com/200x300?text=Sem+Imagem";
+
+  const getPosterUrl = (poster: string | null) => {
+    if (!poster) return posterPlaceholder;
+    if (poster.startsWith("http")) return poster;
+    return `https://image.tmdb.org/t/p/w500${poster}`;
+  };
+
+  const renderCarrossel = (items: ItemMedia[]) => {
     if (!items || items.length === 0) return null;
 
-  return (
+    return (
       <div className="carousel">
         {items.map(item => (
           <Link
             key={item.id}
             to={item.tipo === "filme" ? `/filme/${item.id}` : `/serie/${item.id}`}
-            className="card"
+            className="perfil-card home-card"
           >
-            <img
-              src={
-                item.poster
-                  ? `https://image.tmdb.org/t/p/w500${item.poster}`
-                  : "https://via.placeholder.com/200x300?text=Sem+Imagem"
-              }
-              alt={item.titulo}
-            />
-            <h3>{item.titulo}</h3>
+            <div className="perfil-card-thumb home-card-thumb">
+              <img
+                src={getPosterUrl(item.poster)}
+                alt={item.titulo}
+              />
+            </div>
+            <div className="perfil-card-body home-card-body">
+              <h3 className="perfil-card-title">{item.titulo}</h3>
+              <div className="perfil-card-info-top">
+                {item.rating !== null && item.rating !== undefined && (
+                  <span className="perfil-card-rating">
+                    {item.rating.toFixed(1)} ⭐
+                    {item.votes && item.votes > 0 ? ` · ${item.votes} votos` : ""}
+                  </span>
+                )}
+                <span className="perfil-card-sep">·</span>
+                <span className="perfil-card-type">
+                  {item.tipo === "filme" ? "Filme" : "Série"}
+                </span>
+              </div>
+            </div>
           </Link>
         ))}
       </div>

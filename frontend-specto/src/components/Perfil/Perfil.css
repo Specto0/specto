@@ -143,13 +143,67 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1; /* permite empurrar a data para o fundo */
 }
 
+/* (mantém-se caso algum h3 dentro do body ainda exista) */
 .perfil-card-body h3 {
   margin: 0;
   font-size: 1rem;
   line-height: 1.35;
 }
+
+/* Título com altura fixa (até 2 linhas) para alinhar cards */
+.perfil-card-title {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;       /* até 2 linhas */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: calc(1.35em * 2); /* reserva espaço igual para todos */
+}
+
+/* --- NOVO LAYOUT DE INFORMAÇÃO --- */
+/* Linha superior: rating + tipo (numa única linha) */
+.perfil-card-info-top {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-container.light .perfil-card-info-top {
+  color: rgba(10, 25, 41, 0.65);
+}
+
+/* Data em baixo, alinhada ao fundo do card */
+.perfil-card-info-bottom {
+  margin-top: auto; /* cola esta linha ao fundo do body */
+  font-size: 0.85rem;
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.home-container.light .perfil-card-info-bottom {
+  color: rgba(10, 25, 41, 0.6);
+}
+
+/* Mostrar o separador “·” só quando houver rating */
+.perfil-card-info-top .perfil-card-sep:first-of-type {
+  display: none;
+}
+.perfil-card-info-top .perfil-card-rating + .perfil-card-sep {
+  display: inline;
+}
+/* --- FIM NOVO LAYOUT --- */
 
 .perfil-card-meta {
   margin: 0;
@@ -287,5 +341,11 @@
   .perfil-header h1 {
     font-size: 1.7rem;
   }
+}
 
+/* Opcional: permite quebra da linha de info em ecrãs muito estreitos */
+@media (max-width: 380px) {
+  .perfil-card-info-top {
+    white-space: normal;
+  }
 }

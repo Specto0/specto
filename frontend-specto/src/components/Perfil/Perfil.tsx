@@ -213,20 +213,29 @@ export default function Perfil() {
               {item.favorito && <span className="perfil-card-badge">★ Favorito</span>}
             </div>
             <div className="perfil-card-body">
-              <h3>{item.titulo}</h3>
-              {item.media_avaliacao !== null && item.media_avaliacao !== undefined && (
-                <p className="perfil-card-meta">
-                  {item.media_avaliacao.toFixed(1)} ⭐
-                  {item.votos !== null && item.votos !== undefined && item.votos > 0
-                    ? ` · ${item.votos} votos`
-                    : ""}
-                </p>
-              )}
-              <p className="perfil-card-meta">
-                {item.tipo === "filme" ? "Filme" : "Série"} ·{" "}
+              <h3 className="perfil-card-title">{item.titulo}</h3>
+
+              <div className="perfil-card-info-top">
+                {item.media_avaliacao !== null && item.media_avaliacao !== undefined && (
+                  <span className="perfil-card-rating">
+                    {item.media_avaliacao.toFixed(1)} ⭐
+                    {item.votos !== null && item.votos !== undefined && item.votos > 0
+                      ? ` · ${item.votos} votos`
+                      : ""}
+                  </span>
+                )}
+                <span className="perfil-card-sep">·</span>
+                <span className="perfil-card-type">
+                  {item.tipo === "filme" ? "Filme" : "Série"}
+                </span>
+              </div>
+
+              <div className="perfil-card-info-bottom">
                 {new Date(item.data_visto).toLocaleDateString("pt-PT")}
-              </p>
+              </div>
             </div>
+
+
           </Link>
         ))}
       </div>
@@ -237,10 +246,10 @@ export default function Perfil() {
     <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
       <NavBar
         query=""
-        setQuery={() => {}}
+        setQuery={() => { }}
         searching={false}
         handleSearch={(e) => e.preventDefault()}
-        resetSearch={() => {}}
+        resetSearch={() => { }}
         toggleDarkMode={toggleDarkMode}
         toggleDarkTheme={toggleDarkTheme}
       />

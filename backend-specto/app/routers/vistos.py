@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -244,3 +244,19 @@ async def atualizar_visto(
     serie = await session.get(Serie, visto.serie_id) if visto.serie_id else None
 
     return _map_visto(visto, filme, serie)
+
+
+@router.delete("/{visto_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remover_visto(
+    visto_id: int,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+) -> Response:
+    visto = await session.get(Visto, visto_id)
+    if not visto or visto.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Visto não encontrado.")
+
+    await session.delete(visto)
+    await session.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
