@@ -46,8 +46,24 @@ export default function FilmesDetalhes() {
   const [filme, setFilme] = useState<FilmeDetalhesType | null>(null);
   const [toggleDarkMode, setToggleDarkMode] = useState(true);
   const [reviewsExpandida, setReviewsExpandida] = useState<Record<number, boolean>>({});
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem("token"));
+  const [isSavingVisto, setIsSavingVisto] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [wasAdded, setWasAdded] = useState(false);
 
   const toggleDarkTheme = () => setToggleDarkMode((prev) => !prev);
+
+  useEffect(() => {
+    const handleStorage = () => setIsAuthenticated(!!localStorage.getItem("token"));
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timeout = window.setTimeout(() => setFeedback(null), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
 
   // Fetch dos detalhes do filme
   useEffect(() => {
@@ -66,6 +82,124 @@ export default function FilmesDetalhes() {
 
     fetchFilme();
   }, [id]);
+
+  useEffect(() => {
+    if (!filme || !isAuthenticated) {
+      setWasAdded(false);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const controller = new AbortController();
+
+    fetch("http://127.0.0.1:8000/vistos", {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          setIsAuthenticated(false);
+          return null;
+        }
+        return res.ok ? res.json() : null;
+      })
+      .then((data) => {
+        if (!data) return;
+        const jaVisto = Array.isArray(data.filmes)
+          ? data.filmes.some((item: any) => item.tmdb_id === filme.id)
+          : false;
+        setWasAdded(jaVisto);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        console.warn("Falha ao verificar vistos:", err);
+      });
+
+    return () => controller.abort();
+  }, [filme, isAuthenticated]);
+
+  const handleAdicionarAosVistos = async () => {
+    if (!filme) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAuthenticated(false);
+      setFeedback({
+        type: "error",
+        message: "Precisas de iniciar sessão para adicionares aos vistos.",
+      });
+      return;
+    }
+
+    const jaEstavaAdicionado = wasAdded;
+    setIsSavingVisto(true);
+    setFeedback(null);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/vistos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tipo: "filme",
+          tmdb_id: filme.id,
+          titulo: filme.titulo,
+          titulo_original: filme.original_title,
+          descricao: filme.sinopse,
+          poster_path: filme.poster,
+          backdrop_path: filme.backdrop,
+          data_lancamento: filme.data_lancamento,
+          media_avaliacao: filme.nota,
+        }),
+      });
+
+      const raw = await response.text();
+      let data: any = null;
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = null;
+        }
+      }
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+        }
+        const message =
+          (data && (data.detail || data.message)) ||
+          "Não foi possível adicionar este filme aos vistos.";
+        throw new Error(message);
+      }
+
+      setWasAdded(true);
+      const respostaFavorito = data && data.favorito;
+      setFeedback({
+        type: "success",
+        message: respostaFavorito
+          ? "Está nos teus favoritos e vistos!"
+          : jaEstavaAdicionado
+          ? "Os teus vistos foram atualizados."
+          : "Adicionado aos teus vistos!",
+      });
+    } catch (err) {
+      console.error("Erro ao adicionar aos vistos:", err);
+      setFeedback({
+        type: "error",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao adicionar aos vistos.",
+      });
+    } finally {
+      setIsSavingVisto(false);
+    }
+  };
 
   if (!filme) return <LoadingSpinner color="#3b82f6" size="large" />;
 
@@ -145,6 +279,39 @@ export default function FilmesDetalhes() {
                   </p>
                 )}
               </div>
+
+              {isAuthenticated ? (
+                <div className="detalhes-actions">
+                  {!wasAdded ? (
+                    <button
+                      className="detalhes-cta"
+                      onClick={handleAdicionarAosVistos}
+                      disabled={isSavingVisto}
+                    >
+                      Adicionar aos vistos
+                    </button>
+                  ) : (
+                    <span className="detalhes-feedback sucesso">
+                      Já está nos teus vistos.
+                    </span>
+                  )}
+                  {feedback && (
+                    <span
+                      className={`detalhes-feedback ${
+                        feedback.type === "success" ? "sucesso" : "erro"
+                      }`}
+                    >
+                      {feedback.message}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="detalhes-actions">
+                  <span className="detalhes-feedback erro">
+                    Inicia sessão para adicionares este filme aos teus vistos.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

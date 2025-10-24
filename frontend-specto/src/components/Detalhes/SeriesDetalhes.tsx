@@ -49,6 +49,22 @@ export default function SeriesDetalhes() {
 
   // Controla o tamanho das reviews
   const [reviewsExpandida, setReviewsExpandida] = useState<Record<number, boolean>>({});
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem("token"));
+  const [isSavingVisto, setIsSavingVisto] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [wasAdded, setWasAdded] = useState(false);
+
+  useEffect(() => {
+    const handleStorage = () => setIsAuthenticated(!!localStorage.getItem("token"));
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timeout = window.setTimeout(() => setFeedback(null), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
 
   // Fetch dos detalhes da série
   useEffect(() => {
@@ -69,6 +85,124 @@ export default function SeriesDetalhes() {
 
     fetchSerie();
   }, [id]);
+
+  useEffect(() => {
+    if (!serie || !isAuthenticated) {
+      setWasAdded(false);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const controller = new AbortController();
+
+    fetch("http://127.0.0.1:8000/vistos", {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          setIsAuthenticated(false);
+          return null;
+        }
+        return res.ok ? res.json() : null;
+      })
+      .then((data) => {
+        if (!data) return;
+        const jaVisto = Array.isArray(data.series)
+          ? data.series.some((item: any) => item.tmdb_id === serie.id)
+          : false;
+        setWasAdded(jaVisto);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        console.warn("Falha ao verificar vistos:", err);
+      });
+
+    return () => controller.abort();
+  }, [serie, isAuthenticated]);
+
+  const handleAdicionarAosVistos = async () => {
+    if (!serie) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAuthenticated(false);
+      setFeedback({
+        type: "error",
+        message: "Precisas de iniciar sessão para adicionares aos vistos.",
+      });
+      return;
+    }
+
+    const jaEstavaAdicionado = wasAdded;
+    setIsSavingVisto(true);
+    setFeedback(null);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/vistos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tipo: "serie",
+          tmdb_id: serie.id,
+          titulo: serie.titulo,
+          titulo_original: serie.original_name,
+          descricao: serie.sinopse,
+          poster_path: serie.poster,
+          backdrop_path: serie.backdrop,
+          data_lancamento: serie.data_lancamento,
+          media_avaliacao: serie.nota,
+        }),
+      });
+
+      const raw = await response.text();
+      let data: any = null;
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = null;
+        }
+      }
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+        }
+        const message =
+          (data && (data.detail || data.message)) ||
+          "Não foi possível adicionar esta série aos vistos.";
+        throw new Error(message);
+      }
+
+      setWasAdded(true);
+      const respostaFavorito = data && data.favorito;
+      setFeedback({
+        type: "success",
+        message: respostaFavorito
+          ? "Está nos teus favoritos e vistos!"
+          : jaEstavaAdicionado
+          ? "Os teus vistos foram atualizados."
+          : "Adicionada aos teus vistos!",
+      });
+    } catch (err) {
+      console.error("Erro ao adicionar série aos vistos:", err);
+      setFeedback({
+        type: "error",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao adicionar aos vistos.",
+      });
+    } finally {
+      setIsSavingVisto(false);
+    }
+  };
 
   if (loading) return <LoadingSpinner color="#3b82f6" size="large" />;
   if (!serie) return <p className="loading">Série não encontrada.</p>;
@@ -158,6 +292,39 @@ export default function SeriesDetalhes() {
                   </p>
                 )}
               </div>
+
+              {isAuthenticated ? (
+                <div className="detalhes-actions">
+                  {!wasAdded ? (
+                    <button
+                      className="detalhes-cta"
+                      onClick={handleAdicionarAosVistos}
+                      disabled={isSavingVisto}
+                    >
+                      Adicionar aos vistos
+                    </button>
+                  ) : (
+                    <span className="detalhes-feedback sucesso">
+                      Já está nos teus vistos.
+                    </span>
+                  )}
+                  {feedback && (
+                    <span
+                      className={`detalhes-feedback ${
+                        feedback.type === "success" ? "sucesso" : "erro"
+                      }`}
+                    >
+                      {feedback.message}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="detalhes-actions">
+                  <span className="detalhes-feedback erro">
+                    Inicia sessão para adicionares esta série aos teus vistos.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

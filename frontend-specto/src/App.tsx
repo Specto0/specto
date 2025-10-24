@@ -6,6 +6,7 @@ import Filmes from "./components/Filmes/Filmes";
 import Series from "./components/Series/Series";
 import Registar from "./components/Registar/Registar";
 import Login from "./components/Login/Login";
+import Perfil from "./components/Perfil/Perfil";
 
 
 
@@ -19,7 +20,7 @@ export default function App() {
         <Route path="/filmes" element={<Filmes />} />
         <Route path="/series" element={<Series />} />
         <Route path="/favoritos" element={<Home />} />
-        <Route path="/perfil" element={<Home />} />
+        <Route path="/perfil" element={<Perfil />} />
         <Route path="/Registar" element={<Registar />} />
         <Route path="/Login" element={<Login />} />
         <Route path="*" element={<Home />} />

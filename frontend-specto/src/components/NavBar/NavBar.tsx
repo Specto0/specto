@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./NavBar.css";
 import { useNavigate } from "react-router-dom";
 import "../Home/Home.css";
@@ -21,6 +21,24 @@ export default function NavBar({
   toggleDarkTheme,
 }: NavBarProps) {
   const navigate = useNavigate(); // Hook para navegar entre páginas
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem("token"));
+
+  useEffect(() => {
+    const handleStorage = () => setIsAuthenticated(!!localStorage.getItem("token"));
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  const handleAuthClick = () => {
+    if (isAuthenticated) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setIsAuthenticated(false);
+      navigate("/home");
+    } else {
+      navigate("/Login");
+    }
+  };
 
   return (
   <nav className="navbar">
@@ -57,13 +75,6 @@ export default function NavBar({
         >
           Séries
         </button>
-        <button
-          type="button"
-          onClick={() => navigate("/favoritos")}
-          className="btns-secondary"
-        >
-          Favoritos
-        </button>
       </div>
 
       <div className="search-box">
@@ -92,23 +103,34 @@ export default function NavBar({
       </div>
     </form>
 
-    <div className="toggle-container">
-      <label className="switch">
-        <input
-          type="checkbox"
-          checked={toggleDarkMode}
-          onChange={toggleDarkTheme}
-        />
-        <span className="slider round"></span>
-      </label>
-    </div>
-    <button
+    <div className="navbar-actions">
+      <div className="toggle-container">
+        <label className="switch">
+          <input
+            type="checkbox"
+            checked={toggleDarkMode}
+            onChange={toggleDarkTheme}
+          />
+          <span className="slider round"></span>
+        </label>
+      </div>
+      {isAuthenticated && (
+        <button
           type="button"
           onClick={() => navigate("/perfil")}
           className="btn btn-secondary"
         >
           Perfil
         </button>
+      )}
+      <button
+        type="button"
+        onClick={handleAuthClick}
+        className="btn btn-auth"
+      >
+        {isAuthenticated ? "Logout" : "Login"}
+      </button>
+    </div>
   </nav>
 );
 }

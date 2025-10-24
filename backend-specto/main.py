@@ -6,7 +6,7 @@ from config import API_KEY, BASE_URL
 from routes import filmes, series
 
 # Auth / Users
-from app.routers import auth
+from app.routers import auth, vistos
 from app.schemas.user import UserRead
 
 app = FastAPI(title="Specto API")
@@ -15,6 +15,7 @@ app = FastAPI(title="Specto API")
 app.include_router(filmes.router, prefix="/filmes", tags=["Filmes"])
 app.include_router(series.router, prefix="/series", tags=["Séries"])
 app.include_router(auth.router)  # <--- ADICIONADO: rotas /auth/*
+app.include_router(vistos.router)  # CRUD Vistos
 
 # CORS (abre para todos enquanto desenvolves)
 app.add_middleware(
