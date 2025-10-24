@@ -40,6 +40,12 @@ export default function NavBar({
     }
   };
 
+  const dropdown = document.getElementById("dropdown");
+
+  function toggleMenu(){
+    dropdown?.classList.toggle("open-menu");
+  } 
+
   return (
   <nav className="navbar">
     <form onSubmit={handleSearch} className="navbar-form">
@@ -114,15 +120,7 @@ export default function NavBar({
           <span className="slider round"></span>
         </label>
       </div>
-      {isAuthenticated && (
-        <button
-          type="button"
-          onClick={() => navigate("/perfil")}
-          className="btn btn-secondary"
-        >
-          Perfil
-        </button>
-      )}
+      
       <button
         type="button"
         onClick={handleAuthClick}
@@ -131,6 +129,43 @@ export default function NavBar({
         {isAuthenticated ? "Logout" : "Login"}
       </button>
     </div>
+
+  <nav>
+
+    <img src="assets/images/perfil.png" className="user-logo" onClick={toggleMenu}/>
+    
+    
+    <div className="dropdown" id="dropdown">
+      <div className="sub-dropdown">
+        <div className="user-info">
+        <img src = "assets/images/perfil.png"/>
+        <h3>User</h3>
+        </div>
+
+        <hr/>
+
+        <a href="/perfil" className="sub-dropdown-link">
+          <img src= "assets/images/images-menu/profile.png" />
+          <p>Edit Profile</p>
+        </a>
+
+        <a href="#" className="sub-dropdown-link">
+          <img src= "assets/images/images-menu/setting.png" />
+          <p>Settings</p>
+        </a>
+
+        <a href="#" className="sub-dropdown-link">
+          <img src= "assets/images/images-menu/help.png" />
+          <p>Help & Support</p>
+        </a>
+
+        <a href="#" /*mudar ref para a da landing page*/ className="sub-dropdown-link">
+          <img src= "assets/images/images-menu/logout.png" />
+          <p>Logout</p>
+        </a>
+      </div>
+    </div>
+  </nav>
   </nav>
 );
 }
