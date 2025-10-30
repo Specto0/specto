@@ -1,9 +1,3 @@
-"""add theme mode to users
-
-Revision ID: add_theme_mode_to_users
-Revises: add_avatar_url_to_users
-Create Date: 2024-10-08 00:00:00
-"""
 
 from typing import Sequence, Union
 
@@ -11,7 +5,6 @@ from alembic import op
 import sqlalchemy as sa
 
 
-# revision identifiers, used by Alembic.
 revision: str = "add_theme_mode_to_users"
 down_revision: Union[str, None] = "add_avatar_url_to_users"
 branch_labels: Union[str, Sequence[str], None] = None

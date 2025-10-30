@@ -1,9 +1,3 @@
-"""add avatar url to users
-
-Revision ID: add_avatar_url_to_users
-Revises: ee4f6f0f094d
-Create Date: 2024-10-07 00:00:00
-"""
 
 from typing import Sequence, Union
 
@@ -11,7 +5,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-# revision identifiers, used by Alembic.
+
 revision: str = "add_avatar_url_to_users"
 down_revision: Union[str, None] = "ee4f6f0f094d"
 branch_labels: Union[str, Sequence[str], None] = None

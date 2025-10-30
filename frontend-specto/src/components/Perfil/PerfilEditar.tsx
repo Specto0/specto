@@ -477,7 +477,7 @@ export default function PerfilEditar() {
             <section className="perfil-editar-card">
               <h2>Fotografia</h2>
               <p className="perfil-editar-card-desc">
-                Escolhe uma imagem quadrada para um melhor enquadramento.
+                Escolha a sua foto de perfil
               </p>
               <div className="perfil-editar-avatar">
                 {avatarPreview ? (
