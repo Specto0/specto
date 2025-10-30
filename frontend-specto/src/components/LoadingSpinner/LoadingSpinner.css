@@ -1,5 +1,12 @@
-/* Container principal - ocupa toda a tela e centraliza */
 .loading-spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 24px 0;
+}
+
+.loading-spinner-container--fullscreen {
   position: fixed;
   top: 0;
   left: 0;
@@ -109,7 +116,12 @@
   text-transform: uppercase;
   animation: pulse 1.5s ease-in-out infinite;
   text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-  
+}
+
+.loading-text-subtitle {
+  font-size: 0.75rem;
+  margin-top: -24px;
+  opacity: 0.8;
 }
 
 /* Animação de pulsação do texto */
@@ -128,7 +140,8 @@
     --spinner-size: 80px;
   }
   
-  .loading-text {
+  .loading-text,
+  .loading-text-subtitle {
     font-size: 1rem;
   }
 }

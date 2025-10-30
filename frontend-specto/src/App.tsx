@@ -7,6 +7,7 @@ import Series from "./components/Series/Series";
 import Registar from "./components/Registar/Registar";
 import Login from "./components/Login/Login";
 import Perfil from "./components/Perfil/Perfil";
+import PerfilEditar from "./components/Perfil/PerfilEditar";
 
 
 
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/series" element={<Series />} />
         <Route path="/favoritos" element={<Home />} />
         <Route path="/perfil" element={<Perfil />} />
+        <Route path="/perfil/editar" element={<PerfilEditar />} />
         <Route path="/Registar" element={<Registar />} />
         <Route path="/Login" element={<Login />} />
         <Route path="*" element={<Home />} />

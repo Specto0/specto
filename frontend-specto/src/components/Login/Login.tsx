@@ -1,6 +1,8 @@
 import "./Login.css";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { applyTheme, coerceTheme } from "../../utils/theme";
+import { buildApiUrl } from "../../utils/api";
 
 interface LogInFormData {
   email: string;
@@ -69,7 +71,7 @@ export default function Login() {
       body.set("username", formData.email); // o backend lê o email em "username"!!
       body.set("password", formData.password);
 
-      const response = await fetch("/auth/login", {
+      const response = await fetch(buildApiUrl("/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body,
@@ -90,7 +92,17 @@ export default function Login() {
 
       // Guarda token e user info
       localStorage.setItem("token", data.access_token);
-      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.user) {
+        const normalizedTheme = coerceTheme(data.user.theme_mode);
+        const normalizedUser = {
+          ...data.user,
+          theme_mode: normalizedTheme,
+        };
+        localStorage.setItem("user", JSON.stringify(normalizedUser));
+        applyTheme(normalizedTheme);
+      } else {
+        applyTheme("dark");
+      }
 
       // Redireciona
       navigate("/Home");

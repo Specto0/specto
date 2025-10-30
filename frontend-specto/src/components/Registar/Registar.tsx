@@ -1,6 +1,7 @@
 import "./Registar.css";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { buildApiUrl } from "../../utils/api";
 
 interface SignUpFormData {
   username: string;
@@ -15,8 +16,6 @@ type FieldErrors = {
   confirmPassword?: string;
   global?: string;
 };
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export default function Registar() {
   const navigate = useNavigate();
@@ -91,7 +90,7 @@ export default function Registar() {
       setSuccessMsg(null);
       setFieldError("global", "");
 
-      const res = await fetch(`${API_BASE}/auth/register`, {
+      const res = await fetch(buildApiUrl("/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

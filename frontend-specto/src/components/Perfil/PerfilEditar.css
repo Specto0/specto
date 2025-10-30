@@ -1,0 +1,375 @@
+.perfil-editar-wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.perfil-editar-loader,
+.perfil-editar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.perfil-editar-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.perfil-editar-card {
+  background: rgba(17, 24, 39, 0.7);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.32);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.home-container.light .perfil-editar-card {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+}
+
+.perfil-editar-card h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.perfil-editar-card-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.home-container.light .perfil-editar-card-desc {
+  color: rgba(71, 85, 105, 0.85);
+}
+
+.perfil-editar-avatar {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.35));
+  overflow: hidden;
+  border: 3px solid rgba(59, 130, 246, 0.45);
+  box-shadow: 0 18px 35px rgba(37, 99, 235, 0.25);
+}
+
+.home-container.light .perfil-editar-avatar {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(59, 130, 246, 0.28));
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.perfil-editar-avatar span {
+  font-size: 3.25rem;
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.home-container.light .perfil-editar-avatar span {
+  color: #0f172a;
+}
+
+.perfil-editar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-editar-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.perfil-upload-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #bfdbfe;
+  cursor: pointer;
+  background: rgba(30, 64, 175, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.perfil-upload-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.perfil-upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
+  background: rgba(37, 99, 235, 0.45);
+}
+
+.home-container.light .perfil-upload-btn {
+  color: #1e3a8a;
+  background: rgba(191, 219, 254, 0.8);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.home-container.light .perfil-upload-btn:hover {
+  background: rgba(147, 197, 253, 0.9);
+}
+
+.perfil-remove-btn {
+  border: none;
+  background: transparent;
+  color: #fca5a5;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  padding: 0;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.perfil-remove-btn:hover {
+  color: #f87171;
+  transform: translateX(3px);
+}
+
+.home-container.light .perfil-remove-btn {
+  color: #dc2626;
+}
+
+.perfil-editar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.perfil-theme-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perfil-theme-field-label {
+  font-weight: 600;
+  color: #bfdbfe;
+}
+
+.home-container.light .perfil-theme-field-label {
+  color: #1f2937;
+}
+
+.perfil-theme-toggle {
+  display: inline-flex;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.home-container.light .perfil-theme-toggle {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.perfil-theme-option {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  background: transparent;
+  color: #cbd5f5;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.perfil-theme-option.ativo {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  box-shadow: 0 12px 20px rgba(37, 99, 235, 0.35);
+}
+
+.home-container.light .perfil-theme-option {
+  color: #1f2937;
+}
+
+.home-container.light .perfil-theme-option.ativo {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: #ffffff;
+}
+
+.perfil-theme-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.home-container.light .perfil-theme-hint {
+  color: rgba(71, 85, 105, 0.85);
+}
+
+.perfil-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perfil-field label {
+  font-weight: 600;
+  color: #bfdbfe;
+  font-size: 0.95rem;
+}
+
+.home-container.light .perfil-field label {
+  color: #1f2937;
+}
+
+.perfil-field input {
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.65);
+  color: #f8fafc;
+  padding: 12px;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.perfil-field input:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.perfil-field input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.home-container.light .perfil-field input {
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+}
+
+.perfil-editar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.perfil-primary-btn,
+.perfil-secondary-btn {
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.perfil-primary-btn {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #fff;
+  box-shadow: 0 18px 28px rgba(37, 99, 235, 0.3);
+}
+
+.perfil-primary-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 32px rgba(37, 99, 235, 0.35);
+}
+
+.perfil-primary-btn:disabled,
+.perfil-secondary-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.home-container.light .perfil-primary-btn {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+}
+
+.perfil-secondary-btn {
+  background: rgba(148, 163, 184, 0.2);
+  color: #cbd5f5;
+}
+
+.perfil-secondary-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 24px rgba(148, 163, 184, 0.25);
+}
+
+.home-container.light .perfil-secondary-btn {
+  color: #1f2937;
+  background: rgba(148, 163, 184, 0.25);
+}
+
+.perfil-editar-alert {
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.perfil-editar-alert.success {
+  background: rgba(22, 163, 74, 0.15);
+  border-color: rgba(22, 163, 74, 0.35);
+  color: #bbf7d0;
+}
+
+.perfil-editar-alert.error {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.home-container.light .perfil-editar-alert.success {
+  background: rgba(22, 163, 74, 0.15);
+  color: #166534;
+}
+
+.home-container.light .perfil-editar-alert.error {
+  background: rgba(248, 113, 113, 0.18);
+  color: #b91c1c;
+}
+
+@media (max-width: 960px) {
+  .perfil-editar-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perfil-editar-avatar {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+@media (max-width: 640px) {
+  .perfil-editar-wrapper {
+    padding: 24px 16px 48px;
+  }
+
+  .perfil-editar-actions {
+    justify-content: stretch;
+  }
+
+  .perfil-primary-btn,
+  .perfil-secondary-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

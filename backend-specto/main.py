@@ -1,13 +1,16 @@
 import httpx  # para fazer requests HTTP
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from config import API_KEY, BASE_URL
 from routes import filmes, series
 
 # Auth / Users
-from app.routers import auth, vistos
+from app.routers import auth, vistos, comentarios
 from app.schemas.user import UserRead
+from app.utils.http_cache import close_cache_client
+from app.utils.avatars import STATIC_ROOT
 
 app = FastAPI(title="Specto API")
 
@@ -16,14 +19,27 @@ app.include_router(filmes.router, prefix="/filmes", tags=["Filmes"])
 app.include_router(series.router, prefix="/series", tags=["Séries"])
 app.include_router(auth.router)  # <--- ADICIONADO: rotas /auth/*
 app.include_router(vistos.router)  # CRUD Vistos
+app.include_router(comentarios.router)
 
 # CORS (abre para todos enquanto desenvolves)
+allowed_origins = {
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+}
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(allowed_origins),
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
 
 # ---------- Rotas auxiliares (TMDb) ----------
 @app.get("/")
@@ -76,8 +92,8 @@ def filme_detalhes(id: int):
 
 # ---------- Endpoint protegido ----------
 @app.get("/me", response_model=UserRead)
-async def me(user = Depends(auth.get_current_user)):
-    return {"id": user.id, "username": user.username, "email": user.email}
+async def me(request: Request, user = Depends(auth.get_current_user)):
+    return auth.user_to_read(user, request)
 
 # ---------- Log das rotas no arranque (debug) ----------
 @app.on_event("startup")
@@ -88,3 +104,8 @@ async def _debug_routes():
             print(r.path, list(r.methods))
         except Exception:
             pass
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_cache_client()

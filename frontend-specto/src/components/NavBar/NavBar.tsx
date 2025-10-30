@@ -1,78 +1,179 @@
-import React, { useEffect, useState } from "react";
-import "./NavBar.css";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./NavBar.css";
 import "../Home/Home.css";
+import { applyTheme, coerceTheme, type ThemeMode } from "../../utils/theme";
+import { resolveAvatarUrl } from "../../utils/avatar";
+import { buildApiUrl } from "../../utils/api";
 
 type NavBarProps = {
-  query: string;
-  setQuery: (q: string) => void;
-  searching: boolean;
-  handleSearch: (e: React.FormEvent) => void;
-  resetSearch: () => void;
   toggleDarkMode: boolean;
-  toggleDarkTheme: () => void;
 };
 
-export default function NavBar({
-  query,
-  setQuery,
-  handleSearch,
-  toggleDarkMode,
-  toggleDarkTheme,
-}: NavBarProps) {
-  const navigate = useNavigate(); // Hook para navegar entre páginas
+type UserInfo = {
+  id: number;
+  username: string;
+  email: string;
+  theme_mode?: ThemeMode;
+  avatar_url?: string | null;
+};
+const getStoredUser = (): UserInfo | null => {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as UserInfo & { theme_mode?: unknown };
+    if (parsed && "theme_mode" in parsed) {
+      parsed.theme_mode = coerceTheme(parsed.theme_mode);
+    }
+    if ("avatar_url" in parsed) {
+      parsed.avatar_url = resolveAvatarUrl(parsed.avatar_url);
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+export default function NavBar({ toggleDarkMode }: NavBarProps) {
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem("token"));
+  const [user, setUser] = useState<UserInfo | null>(() => getStoredUser());
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const handleStorage = () => setIsAuthenticated(!!localStorage.getItem("token"));
+    const handleStorage = () => {
+      const token = localStorage.getItem("token");
+      setIsAuthenticated(!!token);
+      const stored = getStoredUser();
+      setUser(stored);
+      if (stored?.theme_mode) {
+        applyTheme(stored.theme_mode);
+      } else if (!token) {
+        applyTheme("dark");
+      }
+    };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUser(null);
+      setIsMenuOpen(false);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAuthenticated(false);
+      setUser(null);
+      return;
+    }
+
+    let ignore = false;
+
+    const fetchUser = async () => {
+      try {
+        const response = await fetch(buildApiUrl("/me"), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.status === 401) {
+          if (!ignore) {
+            setIsAuthenticated(false);
+            setUser(null);
+          }
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Falha ao obter dados do utilizador.");
+        }
+
+        const data: UserInfo = await response.json();
+        if (!ignore) {
+          const normalizedTheme = coerceTheme(data.theme_mode);
+          const resolvedAvatar = resolveAvatarUrl(data.avatar_url);
+          const normalizedUser: UserInfo = {
+            ...data,
+            theme_mode: normalizedTheme,
+            avatar_url: resolvedAvatar,
+          };
+          setUser(normalizedUser);
+          localStorage.setItem("user", JSON.stringify(normalizedUser));
+          applyTheme(normalizedTheme);
+        }
+      } catch (err) {
+        console.warn("Não foi possível carregar os dados do utilizador:", err);
+        if (!ignore) {
+          setUser(getStoredUser());
+        }
+      }
+    };
+
+    fetchUser();
+    return () => {
+      ignore = true;
+    };
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen]);
 
   const handleAuthClick = () => {
     if (isAuthenticated) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      applyTheme("dark");
       setIsAuthenticated(false);
+      setUser(null);
       navigate("/home");
     } else {
       navigate("/Login");
     }
   };
 
-  const dropdown = document.getElementById("dropdown");
-
-  function toggleMenu(){
-    dropdown?.classList.toggle("open-menu");
-  } 
+  const userInitials = useMemo(() => {
+    if (!user?.username) return "U";
+    return user.username.trim().charAt(0).toUpperCase();
+  }, [user]);
 
   return (
-  <nav className="navbar">
-    <form onSubmit={handleSearch} className="navbar-form">
+    <nav className="navbar">
       <div className="button-group">
         <button
           type="button"
           onClick={() => navigate("/home")}
           className="btn-home"
-          >
+        >
           <img
-          src={
-            toggleDarkMode
-              ? "/assets/images/spectologo.png" // imagem para dark mode
-              : "/assets/images/spectologodark1.png"      // imagem normal
-          }
-          alt="Specto logo"
-          className="logo-specto"
-        />
+            src={
+              toggleDarkMode
+                ? "/assets/images/spectologo.png"
+                : "/assets/images/spectologodark1.png"
+            }
+            alt="Specto logo"
+            className="logo-specto"
+          />
         </button>
 
-       
         <button
           type="button"
           onClick={() => navigate("/filmes")}
           className="btns-secondary"
         >
-          Filmes  
+          Filmes
         </button>
         <button
           type="button"
@@ -83,89 +184,107 @@ export default function NavBar({
         </button>
       </div>
 
-      <div className="search-box">
-        <span className="search-icon">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
+      {!isAuthenticated && (
+        <div className="navbar-actions">
+          <button
+            type="button"
+            onClick={handleAuthClick}
+            className="btn btn-auth"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 21l-4.35-4.35M16.65 16.65A7.5 7.5 0 1116.65 2.5a7.5 7.5 0 010 14.15z"
-            />
-          </svg>
-        </span>
-        <input
-          type="text"
-          placeholder="Search..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="navbar-input"
-        />
-      </div>
-    </form>
-
-    <div className="navbar-actions">
-      <div className="toggle-container">
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={toggleDarkMode}
-            onChange={toggleDarkTheme}
-          />
-          <span className="slider round"></span>
-        </label>
-      </div>
-      
-      <button
-        type="button"
-        onClick={handleAuthClick}
-        className="btn btn-auth"
-      >
-        {isAuthenticated ? "Logout" : "Login"}
-      </button>
-    </div>
-
-  <nav>
-
-    <img src="assets/images/perfil.png" className="user-logo" onClick={toggleMenu}/>
-    
-    
-    <div className="dropdown" id="dropdown">
-      <div className="sub-dropdown">
-        <div className="user-info">
-        <img src = "assets/images/perfil.png"/>
-        <h3>User</h3>
+            Login
+          </button>
         </div>
+      )}
 
-        <hr/>
+      {isAuthenticated && (
+        <div className="navbar-profile" ref={dropdownRef}>
+          <button
+            type="button"
+            className="profile-trigger"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-haspopup="true"
+            aria-expanded={isMenuOpen}
+            aria-label="Abrir menu do utilizador"
+          >
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt="Avatar do utilizador"
+                className="user-avatar-img"
+              />
+            ) : user?.username ? (
+              <span className="user-initials">{userInitials}</span>
+            ) : (
+              <img
+                src="/assets/images/perfil.png"
+                alt="Perfil"
+                className="user-logo"
+              />
+            )}
+          </button>
+          <div className={`dropdown ${isMenuOpen ? "open-menu" : ""}`}>
+            <div className="sub-dropdown">
+              <div className="user-info">
+                <div className="user-avatar">
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt="Avatar do utilizador"
+                      className="user-avatar-img"
+                    />
+                  ) : user?.username ? (
+                    <span>{userInitials}</span>
+                  ) : (
+                    <img src="/assets/images/perfil.png" alt="Perfil" />
+                  )}
+                </div>
+                <div className="user-meta">
+                  <h3 title={user?.username || "Utilizador"}>{user?.username || "Utilizador"}</h3>
+                  {user?.email && <p title={user.email}>{user.email}</p>}
+                </div>
+              </div>
 
-        <a href="/perfil" className="sub-dropdown-link">
-          <img src= "assets/images/images-menu/profile.png" />
-          <p>Edit Profile</p>
-        </a>
+              <hr />
 
-        <a href="#" className="sub-dropdown-link">
-          <img src= "assets/images/images-menu/setting.png" />
-          <p>Settings</p>
-        </a>
+              <button
+                type="button"
+                className="sub-dropdown-link"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  navigate("/perfil");
+                }}
+              >
+                <img src="/assets/images/images-menu/profile.png" alt="" />
+                <p>Ver Perfil</p>
+              </button>
 
-        <a href="#" className="sub-dropdown-link">
-          <img src= "assets/images/images-menu/help.png" />
-          <p>Help & Support</p>
-        </a>
+              <button
+                type="button"
+                className="sub-dropdown-link"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  navigate("/perfil/editar");
+                }}
+              >
+                <img src="/assets/images/images-menu/setting.png" alt="" />
+                <p>Editar Perfil</p>
+              </button>
 
-        <a href="#" /*mudar ref para a da landing page*/ className="sub-dropdown-link">
-          <img src= "assets/images/images-menu/logout.png" />
-          <p>Logout</p>
-        </a>
-      </div>
-    </div>
-  </nav>
-  </nav>
-);
+              <button
+                type="button"
+                className="sub-dropdown-link logout"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleAuthClick();
+                }}
+              >
+                <img src="/assets/images/images-menu/logout.png" alt="" />
+                <p>Terminar sessão</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </nav>
+  );
 }

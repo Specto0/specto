@@ -3,6 +3,15 @@ import { Link } from "react-router-dom";
 import "./Perfil.css";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
+import {
+  applyTheme,
+  coerceTheme,
+  readTheme,
+  subscribeTheme,
+  type ThemeMode,
+} from "../../utils/theme";
+import { resolveAvatarUrl } from "../../utils/avatar";
+import { buildApiUrl } from "../../utils/api";
 
 type VistoItem = {
   id: number;
@@ -24,25 +33,49 @@ type VistoResponse = {
   series: VistoItem[];
 };
 
+type UserInfo = {
+  id: number;
+  username: string;
+  email: string;
+  theme_mode?: ThemeMode;
+  avatar_url?: string | null;
+};
+
 const MAX_ITENS = 6;
+const getStoredUser = (): UserInfo | null => {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as UserInfo;
+    if (parsed && "theme_mode" in parsed) {
+      parsed.theme_mode = coerceTheme(parsed.theme_mode);
+    }
+    if ("avatar_url" in parsed) {
+      parsed.avatar_url = resolveAvatarUrl(parsed.avatar_url);
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
 
 export default function Perfil() {
-  const getInitialTheme = () => localStorage.getItem("tema") !== "light";
+  const getInitialTheme = (): ThemeMode => {
+    const storedUser = getStoredUser();
+    if (storedUser?.theme_mode) {
+      return applyTheme(storedUser.theme_mode);
+    }
+    return readTheme();
+  };
   const getInitialAuth = () => !!localStorage.getItem("token");
 
-  const [toggleDarkMode, setToggleDarkMode] = useState(getInitialTheme);
-  const toggleDarkTheme = () => {
-    setToggleDarkMode((prev) => {
-      const novoTema = !prev;
-      localStorage.setItem("tema", novoTema ? "dark" : "light");
-      return novoTema;
-    });
-  };
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialTheme);
 
   const [vistos, setVistos] = useState<VistoResponse>({ filmes: [], series: [] });
   const [loading, setLoading] = useState(getInitialAuth);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(getInitialAuth);
+  const [user, setUser] = useState<UserInfo | null>(() => getStoredUser());
   const [favoritoLoading, setFavoritoLoading] = useState<Record<number, boolean>>({});
   const [expandir, setExpandir] = useState({
     filmes: false,
@@ -50,7 +83,31 @@ export default function Perfil() {
   });
 
   useEffect(() => {
-    const onStorage = () => setIsAuthenticated(!!localStorage.getItem("token"));
+    const unsubscribe = subscribeTheme(setThemeMode);
+    return unsubscribe;
+  }, []);
+
+  const userInitials = useMemo(() => {
+    if (!user?.username) return "U";
+    return user.username.trim().charAt(0).toUpperCase();
+  }, [user]);
+
+  const avatarUrl = user?.avatar_url ? resolveAvatarUrl(user.avatar_url) : null;
+
+  useEffect(() => {
+    const onStorage = () => {
+      const token = localStorage.getItem("token");
+      setIsAuthenticated(!!token);
+      const stored = getStoredUser();
+      setUser(stored);
+      if (stored?.theme_mode) {
+        setThemeMode(applyTheme(stored.theme_mode));
+      } else if (!token) {
+        setThemeMode(applyTheme("dark"));
+      } else {
+        setThemeMode(readTheme());
+      }
+    };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
@@ -60,37 +117,86 @@ export default function Perfil() {
     if (!token) {
       setIsAuthenticated(false);
       setVistos({ filmes: [], series: [] });
+      setUser(null);
+       setThemeMode(applyTheme("dark"));
       setLoading(false);
       return;
     }
 
-    setIsAuthenticated(true);
     setLoading(true);
     setError(null);
 
     const controller = new AbortController();
+    const { signal } = controller;
 
-    fetch("http://127.0.0.1:8000/vistos", {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        if (res.status === 401) {
-          throw new Error("Precisas de iniciar sessão para veres os teus vistos.");
+    const carregarUtilizador = async () => {
+      try {
+        const response = await fetch(buildApiUrl("/me"), {
+          headers: { Authorization: `Bearer ${token}` },
+          signal,
+        });
+
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          setUser(null);
+          setThemeMode(applyTheme("dark"));
+          return;
         }
-        if (!res.ok) {
-          const detail = await res.text();
+
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar os dados do utilizador.");
+        }
+
+        const data: UserInfo = await response.json();
+        const normalizedTheme = coerceTheme(data.theme_mode);
+        const normalizedUser: UserInfo = {
+          ...data,
+          theme_mode: normalizedTheme,
+          avatar_url: resolveAvatarUrl(data.avatar_url),
+        };
+        setUser(normalizedUser);
+        localStorage.setItem("user", JSON.stringify(normalizedUser));
+        const applied = applyTheme(normalizedTheme);
+        setThemeMode(applied);
+      } catch (err) {
+        if (signal.aborted) return;
+        console.warn("Falha ao carregar dados do utilizador:", err);
+      }
+    };
+
+    const carregarVistos = async () => {
+      try {
+        const response = await fetch(buildApiUrl("/vistos"), {
+          headers: { Authorization: `Bearer ${token}` },
+          signal,
+        });
+
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          setError("Precisas de iniciar sessão para veres os teus vistos.");
+          setVistos({ filmes: [], series: [] });
+          return;
+        }
+
+        if (!response.ok) {
+          const detail = await response.text();
           throw new Error(detail || "Erro ao carregar vistos.");
         }
-        return res.json();
-      })
-      .then((data: VistoResponse) => setVistos(data))
-      .catch((err) => {
-        if (controller.signal.aborted) return;
+
+        const data: VistoResponse = await response.json();
+        setVistos(data);
+      } catch (err) {
+        if (signal.aborted) return;
         console.error("Erro ao buscar vistos:", err);
         setError(err instanceof Error ? err.message : "Erro inesperado.");
-      })
-      .finally(() => setLoading(false));
+      }
+    };
+
+    Promise.allSettled([carregarUtilizador(), carregarVistos()]).finally(() => {
+      if (!signal.aborted) {
+        setLoading(false);
+      }
+    });
 
     return () => controller.abort();
   }, [isAuthenticated]);
@@ -131,7 +237,7 @@ export default function Perfil() {
     setFavoritoLoading((prev) => ({ ...prev, [item.id]: true }));
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/vistos/${item.id}`, {
+      const response = await fetch(buildApiUrl(`/vistos/${item.id}`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -243,16 +349,8 @@ export default function Perfil() {
   };
 
   return (
-    <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
-      <NavBar
-        query=""
-        setQuery={() => { }}
-        searching={false}
-        handleSearch={(e) => e.preventDefault()}
-        resetSearch={() => { }}
-        toggleDarkMode={toggleDarkMode}
-        toggleDarkTheme={toggleDarkTheme}
-      />
+    <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
+      <NavBar toggleDarkMode={themeMode === "dark"} />
       {isAuthenticated && loading ? (
         <div className="perfil-loader">
           <LoadingSpinner color="#3b82f6" size="large" />
@@ -271,49 +369,78 @@ export default function Perfil() {
               <p>{error}</p>
             </div>
           ) : (
-            <main className="perfil-content">
-              <section>
-                <h2>Filmes vistos</h2>
-                {vistos.filmes.length ? (
-                  <>
-                    {renderCards(filmesOrdenados, expandir.filmes, handleToggleFavorito)}
-                    {filmesOrdenados.length > MAX_ITENS && (
-                      <button
-                        className={`perfil-toggle favoritos ${expandir.filmes ? "ativo" : ""}`}
-                        onClick={() =>
-                          setExpandir((prev) => ({ ...prev, filmes: !prev.filmes }))
-                        }
-                      >
-                        {expandir.filmes ? "Fechar favoritos" : "Mostrar favoritos"}
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <p className="perfil-empty">Ainda não tens filmes vistos.</p>
-                )}
-              </section>
+            <>
+              {user && (
+                <header className="perfil-header">
+                  <div className="perfil-user">
+                    <div className="perfil-user-avatar" aria-hidden="true">
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt="Avatar do utilizador"
+                          className="perfil-user-avatar-img"
+                        />
+                      ) : (
+                        <span>{userInitials}</span>
+                      )}
+                    </div>
+                    <div className="perfil-user-meta">
+                      <h1>Olá, {user.username}</h1>
+                      <p>{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="perfil-actions">
+                    <Link to="/perfil/editar" className="perfil-edit-btn">
+                      Editar perfil
+                    </Link>
+                  </div>
+                </header>
+              )}
 
-              <section>
-                <h2>Séries vistas</h2>
-                {vistos.series.length ? (
-                  <>
-                    {renderCards(seriesOrdenadas, expandir.series, handleToggleFavorito)}
-                    {seriesOrdenadas.length > MAX_ITENS && (
-                      <button
-                        className={`perfil-toggle favoritos ${expandir.series ? "ativo" : ""}`}
-                        onClick={() =>
-                          setExpandir((prev) => ({ ...prev, series: !prev.series }))
-                        }
-                      >
-                        {expandir.series ? "Fechar favoritos" : "Mostrar favoritos"}
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <p className="perfil-empty">Ainda não tens séries vistas.</p>
-                )}
-              </section>
-            </main>
+              <main className="perfil-content">
+                <section>
+                  <h2>Filmes vistos</h2>
+                  {vistos.filmes.length ? (
+                    <>
+                      {renderCards(filmesOrdenados, expandir.filmes, handleToggleFavorito)}
+                      {filmesOrdenados.length > MAX_ITENS && (
+                        <button
+                          className={`perfil-toggle favoritos ${expandir.filmes ? "ativo" : ""}`}
+                          onClick={() =>
+                            setExpandir((prev) => ({ ...prev, filmes: !prev.filmes }))
+                          }
+                        >
+                          {expandir.filmes ? "Fechar favoritos" : "Mostrar favoritos"}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="perfil-empty">Ainda não tens filmes vistos.</p>
+                  )}
+                </section>
+
+                <section>
+                  <h2>Séries vistas</h2>
+                  {vistos.series.length ? (
+                    <>
+                      {renderCards(seriesOrdenadas, expandir.series, handleToggleFavorito)}
+                      {seriesOrdenadas.length > MAX_ITENS && (
+                        <button
+                          className={`perfil-toggle favoritos ${expandir.series ? "ativo" : ""}`}
+                          onClick={() =>
+                            setExpandir((prev) => ({ ...prev, series: !prev.series }))
+                          }
+                        >
+                          {expandir.series ? "Fechar favoritos" : "Mostrar favoritos"}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="perfil-empty">Ainda não tens séries vistas.</p>
+                  )}
+                </section>
+              </main>
+            </>
           )}
         </div>
       )}

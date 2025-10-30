@@ -1,19 +1,17 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./Detalhes.css";
 import "../Home/Home.css";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
+import ComentariosSection from "./ComentariosSection";
+import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
+import { buildApiUrl } from "../../utils/api";
 
 type ElencoType = {
   nome: string;
   personagem: string;
   foto?: string | null;
-};
-
-type ReviewType = {
-  autor: string;
-  conteudo: string;
 };
 
 type VideoType = {
@@ -40,15 +38,13 @@ type FilmeDetalhesType = {
   orcamento?: number;
   receita?: number;
   elenco?: ElencoType[];
-  reviews?: ReviewType[];
   videos?: VideoType[];
 };
 
 export default function FilmesDetalhes() {
   const { id } = useParams<{ id: string }>();
   const [filme, setFilme] = useState<FilmeDetalhesType | null>(null);
-  const [toggleDarkMode, setToggleDarkMode] = useState(true);
-  const [reviewsExpandida, setReviewsExpandida] = useState<Record<number, boolean>>({});
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => readTheme());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem("token"));
   const [isSavingVisto, setIsSavingVisto] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -56,8 +52,12 @@ export default function FilmesDetalhes() {
   const [vistoId, setVistoId] = useState<number | null>(null);
   const [modalMessage, setModalMessage] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTrailerIndex, setActiveTrailerIndex] = useState(0);
 
-  const toggleDarkTheme = () => setToggleDarkMode((prev) => !prev);
+  useEffect(() => {
+    const unsubscribe = subscribeTheme(setThemeMode);
+    return unsubscribe;
+  }, []);
 
   const closeModal = () => {
     setShowModal(false);
@@ -90,13 +90,40 @@ export default function FilmesDetalhes() {
     return () => window.clearTimeout(timeout);
   }, [showModal]);
 
+  const trailers = useMemo(() => {
+    if (!filme?.videos) return [];
+    return filme.videos.filter(
+      (video) =>
+        video &&
+        typeof video.site === "string" &&
+        video.site.toLowerCase() === "youtube" &&
+        video.chave
+    );
+  }, [filme]);
+
+  useEffect(() => {
+    setActiveTrailerIndex(0);
+  }, [filme?.id]);
+
+  useEffect(() => {
+    if (!trailers.length) {
+      if (activeTrailerIndex !== 0) {
+        setActiveTrailerIndex(0);
+      }
+      return;
+    }
+    if (activeTrailerIndex > trailers.length - 1) {
+      setActiveTrailerIndex(0);
+    }
+  }, [trailers.length, activeTrailerIndex]);
+
   // Fetch dos detalhes do filme
   useEffect(() => {
     if (!id) return;
 
     const fetchFilme = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/filmes/detalhes/${id}`);
+        const res = await fetch(buildApiUrl(`/filmes/detalhes/${id}`));
         if (!res.ok) throw new Error("Erro ao buscar detalhes do filme");
         const data = await res.json();
         setFilme(data);
@@ -120,7 +147,7 @@ export default function FilmesDetalhes() {
 
     const controller = new AbortController();
 
-    fetch("http://127.0.0.1:8000/vistos", {
+    fetch(buildApiUrl("/vistos"), {
       headers: { Authorization: `Bearer ${token}` },
       signal: controller.signal,
     })
@@ -166,7 +193,7 @@ export default function FilmesDetalhes() {
     setFeedback(null);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/vistos", {
+      const response = await fetch(buildApiUrl("/vistos"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -248,7 +275,7 @@ export default function FilmesDetalhes() {
     setFeedback(null);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/vistos/${vistoId}`, {
+      const response = await fetch(buildApiUrl(`/vistos/${vistoId}`), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -291,20 +318,65 @@ export default function FilmesDetalhes() {
     }
   };
 
+  const handlePrevTrailer = () => {
+    if (trailers.length < 2) return;
+    setActiveTrailerIndex((prev) => (prev - 1 + trailers.length) % trailers.length);
+  };
+
+  const handleNextTrailer = () => {
+    if (trailers.length < 2) return;
+    setActiveTrailerIndex((prev) => (prev + 1) % trailers.length);
+  };
+
+  const handleSelectTrailer = (index: number) => {
+    if (index === activeTrailerIndex) return;
+    if (index < 0 || index > trailers.length - 1) return;
+    setActiveTrailerIndex(index);
+  };
+
+  const metaItems = [
+    filme?.data_lancamento
+      ? { label: "Estreia", value: filme.data_lancamento }
+      : null,
+    typeof filme?.nota === "number"
+      ? { label: "Nota", value: `${filme.nota.toFixed(1)} ⭐` }
+      : null,
+    filme?.adult !== undefined
+      ? { label: "Classificação", value: filme.adult ? "Adulto" : "Livre" }
+      : null,
+    filme?.generos?.length
+      ? { label: "Géneros", value: filme.generos.join(", ") }
+      : null,
+    filme?.duracao
+      ? { label: "Duração", value: `${filme.duracao} min` }
+      : null,
+    typeof filme?.orcamento === "number" && filme.orcamento > 0
+      ? { label: "Orçamento", value: `$${filme.orcamento.toLocaleString()}` }
+      : null,
+    typeof filme?.receita === "number" && filme.receita > 0
+      ? { label: "Receita", value: `$${filme.receita.toLocaleString()}` }
+      : null,
+  ].filter(Boolean) as Array<{ label: string; value: string }>;
+
+  const activeTrailer = trailers.length
+    ? trailers[Math.min(activeTrailerIndex, trailers.length - 1)]
+    : null;
+
+  const addButtonLabel = wasAdded
+    ? "Já nos teus vistos"
+    : isSavingVisto
+    ? "A guardar..."
+    : "Adicionar aos vistos";
+
+  const removeButtonLabel = isSavingVisto
+    ? "A remover..."
+    : "Remover dos vistos";
+
   if (!filme) return <LoadingSpinner color="#3b82f6" size="large" />;
 
   return (
-    <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
-      {/* NavBar tem apenas o tema!!!! */}
-      <NavBar
-        query=""
-        setQuery={() => {}}
-        searching={false}
-        handleSearch={() => {}}
-        resetSearch={() => {}}
-        toggleDarkMode={toggleDarkMode}
-        toggleDarkTheme={toggleDarkTheme}
-      />
+    <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
+      <NavBar toggleDarkMode={themeMode === "dark"} />
 
       {showModal && modalMessage && (
         <div
@@ -330,88 +402,59 @@ export default function FilmesDetalhes() {
       )}
 
       <div className="detalhes-container">
-        {/* Banner principal */}
-        <div className="detalhes-header">
+        <section className="detalhes-hero">
           {filme.backdrop && (
             <img
-              className="detalhes-backdrop"
+              className="detalhes-hero-bg"
               src={filme.backdrop}
               alt={filme.titulo}
             />
           )}
-
-          <div className="detalhes-overlay">
+          <div className="detalhes-hero-gradient" />
+          <div className="detalhes-hero-content">
             {filme.poster && (
               <img
-                className="detalhes-poster"
+                className="detalhes-hero-poster"
                 src={filme.poster}
                 alt={filme.titulo}
               />
             )}
 
-            <div className="detalhes-texto">
-              <h1 className="detalhes-titulo">{filme.titulo}</h1>
-              <p className="detalhes-sinopse">{filme.sinopse}</p>
-              <div className="detalhes-info">
-                {filme.data_lancamento && (
-                  <p>
-                    <strong>Estreia:</strong> {filme.data_lancamento}
-                  </p>
-                )}
-                {filme.nota && (
-                  <p>
-                    <strong>Nota:</strong> {filme.nota} ⭐
-                  </p>
-                )}
-                {filme.adult !== undefined && (
-                  <p>
-                    <strong>Classificação:</strong>{" "}
-                    {filme.adult ? "Adulto" : "Livre"}
-                  </p>
-                )}
-                {filme.generos && (
-                  <p>
-                    <strong>Géneros:</strong> {filme.generos.join(", ")}
-                  </p>
-                )}
-                {filme.duracao && (
-                  <p>
-                    <strong>Duração:</strong> {filme.duracao} min
-                  </p>
-                )}
-                {filme.orcamento && (
-                  <p>
-                    <strong>Orçamento:</strong> $
-                    {filme.orcamento.toLocaleString()}
-                  </p>
-                )}
-                {filme.receita && (
-                  <p>
-                    <strong>Receita:</strong> $
-                    {filme.receita.toLocaleString()}
-                  </p>
-                )}
-              </div>
+            <div className="detalhes-hero-main">
+              <h1 className="detalhes-title">{filme.titulo}</h1>
+              {filme.sinopse && (
+                <p className="detalhes-sinopse">{filme.sinopse}</p>
+              )}
+
+              {metaItems.length > 0 && (
+                <div className="detalhes-meta">
+                  {metaItems.map((item) => (
+                    <div className="detalhes-meta-item" key={item.label}>
+                      <span className="detalhes-meta-label">{item.label}</span>
+                      <span className="detalhes-meta-value">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {isAuthenticated ? (
                 <div className="detalhes-actions">
-                  {!wasAdded ? (
-                    <button
-                      className="detalhes-cta"
-                      onClick={handleAdicionarAosVistos}
-                      disabled={isSavingVisto}
-                      type="button"
-                    >
-                      Adicionar aos vistos
-                    </button>
-                  ) : (
+                  <button
+                    className={`detalhes-cta ${wasAdded ? "detalhes-cta-adicionado" : ""}`}
+                    onClick={handleAdicionarAosVistos}
+                    disabled={isSavingVisto || wasAdded}
+                    type="button"
+                  >
+                    {addButtonLabel}
+                  </button>
+                  {wasAdded && (
                     <button
                       className="detalhes-cta detalhes-cta-remover"
                       onClick={handleRemoverDosVistos}
                       disabled={isSavingVisto}
                       type="button"
                     >
-                      Remover dos vistos
+                      {removeButtonLabel}
                     </button>
                   )}
                   {feedback && (
@@ -433,86 +476,91 @@ export default function FilmesDetalhes() {
               )}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Elenco */}
+        {activeTrailer && (
+          <section className="detalhes-section detalhes-trailer-section">
+            <div className="detalhes-section-header">
+              <h2>Trailer{trailers.length > 1 ? "s" : ""}</h2>
+              {trailers.length > 1 && (
+                <span className="detalhes-trailer-count">
+                  {activeTrailerIndex + 1}/{trailers.length}
+                </span>
+              )}
+            </div>
+            <div className="detalhes-trailer-player">
+              <iframe
+                key={activeTrailer.chave}
+                src={`https://www.youtube.com/embed/${activeTrailer.chave}`}
+                title={activeTrailer.tipo || "Trailer"}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+            {trailers.length > 1 && (
+              <div className="detalhes-trailer-controls">
+                <button
+                  type="button"
+                  className="detalhes-trailer-button"
+                  onClick={handlePrevTrailer}
+                >
+                  Anterior
+                </button>
+                <div className="detalhes-trailer-dots">
+                  {trailers.map((video, idx) => (
+                    <button
+                      key={video.chave}
+                      type="button"
+                      className={`detalhes-trailer-dot ${
+                        idx === activeTrailerIndex ? "ativo" : ""
+                      }`}
+                      onClick={() => handleSelectTrailer(idx)}
+                      aria-label={`Ver trailer ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="detalhes-trailer-button"
+                  onClick={handleNextTrailer}
+                >
+                  Seguinte
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
         {filme.elenco && filme.elenco.length > 0 && (
-          <>
-            <h2 className="elenco-h2">Elenco</h2>
+          <section className="detalhes-section">
+            <div className="detalhes-section-header">
+              <h2>Elenco</h2>
+            </div>
             <div className="elenco-grid">
               {filme.elenco.map((ator, idx) => {
                 const fotoSrc = ator.foto || ATOR_PLACEHOLDER;
                 return (
-                  <div className="elenco-card" key={idx}>
+                  <div className="elenco-card" key={`${ator.nome}-${idx}`}>
                     <img src={fotoSrc} alt={ator.nome} />
-                    <p>
-                      <strong>{ator.nome}</strong>
-                    </p>
-                    {ator.personagem && <p>{ator.personagem}</p>}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {/* Reviews */}
-        {filme.reviews && filme.reviews.length > 0 && (
-          <>
-            <h2 className="review-h2">Reviews</h2>
-            <div className="reviews-col">
-              {filme.reviews.map((rev, idx) => {
-                const expandida = reviewsExpandida[idx] || false;
-                const isLong = rev.conteudo.length > 300;
-                return (
-                  <div className="review-card" key={idx}>
-                    <p>
-                      <strong>{rev.autor}</strong>
-                    </p>
-                    <p className={`review-text ${expandida ? "expandido" : ""}`}>
-                      {isLong && !expandida
-                        ? rev.conteudo.slice(0, 300) + "..."
-                        : rev.conteudo}
-                    </p>
-                    {isLong && (
-                      <button
-                        className="ver-mais"
-                        onClick={() =>
-                          setReviewsExpandida((prev) => ({
-                            ...prev,
-                            [idx]: !expandida,
-                          }))
-                        }
-                      >
-                        {expandida ? "Ver menos" : "Ver mais"}
-                      </button>
+                    <p className="elenco-nome">{ator.nome}</p>
+                    {ator.personagem && (
+                      <p className="elenco-personagem">{ator.personagem}</p>
                     )}
                   </div>
                 );
               })}
             </div>
-          </>
+          </section>
         )}
 
-        {/* Trailers */}
-        {filme.videos && filme.videos.length > 0 && (
-          <>
-            <h2 className="videos-h2">Trailers</h2>
-            <div className="videos-grid">
-              {filme.videos.map((vid, idx) => (
-                <div className="video-card" key={idx}>
-                  <iframe
-                    src={`https://www.youtube.com/embed/${vid.chave}`}
-                    title={vid.tipo}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+        <section className="detalhes-section comentarios-wrapper">
+          <ComentariosSection
+            contentId={filme.id}
+            contentType="filme"
+            alvoTitulo={filme.titulo}
+            modoEscuroAtivo={themeMode === "dark"}
+          />
+        </section>
       </div>
     </div>
   );

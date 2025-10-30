@@ -22,6 +22,10 @@ class User(Base):
     username: Mapped[str] = mapped_column(CITEXT, unique=True, nullable=False)
     email: Mapped[str] = mapped_column(CITEXT, unique=True, nullable=False)
     senha_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    avatar_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    theme_mode: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     criado_em: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
 
 class Filme(Base):

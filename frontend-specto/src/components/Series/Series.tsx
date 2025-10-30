@@ -1,9 +1,22 @@
-import React, { useState, useEffect } from "react";
-import NavBar from "../NavBar/NavBar";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import "../Home/Home.css";
 import "./Series.css";
+import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
+import { buildApiUrl } from "../../utils/api";
+
+type SerieAPI = {
+  id: number;
+  name?: string | null;
+  original_name?: string | null;
+  titulo?: string | null;
+  poster_path?: string | null;
+  poster?: string | null;
+  first_air_date?: string | null;
+  ano?: string | number | null;
+};
 
 export type Serie = {
   id: number;
@@ -13,43 +26,58 @@ export type Serie = {
   tipo: "serie";
 };
 
-const Series: React.FC = () => {
-  const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [toggleDarkMode, setToggleDarkMode] = useState(true);
+const SERIES_PER_PAGE = 24;
+
+const normalizeTitulo = (item: SerieAPI): string => {
+  const candidates = [item.titulo, item.name, item.original_name];
+  const titulo = candidates.find((value) => typeof value === "string" && value.trim());
+  return titulo ? titulo.trim() : "Sem título";
+};
+
+const normalizeAno = (value?: string | number | null): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim()) {
+    const year = Number.parseInt(value.slice(0, 4), 10);
+    return Number.isFinite(year) ? year : undefined;
+  }
+  return undefined;
+};
+
+const mapSerie = (item: SerieAPI): Serie => ({
+  id: item.id,
+  titulo: normalizeTitulo(item),
+  poster: item.poster_path ?? item.poster ?? null,
+  ano: normalizeAno(item.first_air_date ?? item.ano),
+  tipo: "serie",
+});
+
+const Series = () => {
   const [series, setSeries] = useState<Serie[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"az" | "za" | "anoC" | "anoD">("az");
-
   const [currentPage, setCurrentPage] = useState(1);
-  const seriesPerPage = 24;
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => readTheme());
 
-  const handleSearch = () => setSearching(true);
-  const resetSearch = () => {
-    setSearching(false);
-    setQuery("");
-  };
-  const toggleDarkTheme = () => setToggleDarkMode((prev) => !prev);
+  useEffect(() => {
+    const unsubscribe = subscribeTheme(setThemeMode);
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     setLoading(true);
-    fetch("http://127.0.0.1:8000/series/populares")
+    fetch(buildApiUrl("/series/populares"))
       .then((response) => response.json())
       .then((data) => {
-        const seriesArray = Array.isArray(data.results) ? data.results : data;
+        const seriesArray: SerieAPI[] = Array.isArray(data.results)
+          ? data.results
+          : data;
+        const seriesFormatadas = seriesArray
+          .filter((item): item is SerieAPI => typeof item?.id === "number")
+          .map(mapSerie);
 
-        const seriesFormatadas: Serie[] = seriesArray.map((s: Serie) => ({
-          id: s.id,
-          titulo: s.titulo || s.titulo || "Sem título",
-          poster: s.poster || s.poster|| null,
-          ano: s.ano
-              ? parseInt(s.release_date.split("-")[0])
-              : undefined,
-          tipo: "serie",
-        }));
-
-        // Remove duplicados (ID)
         const seriesUnicas = Array.from(
           new Map(seriesFormatadas.map((s) => [s.id, s])).values()
         );
@@ -60,26 +88,33 @@ const Series: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredSeries = series
-    .filter((serie) =>serie.titulo.toLowerCase().includes(filter.toLowerCase()))
-    .sort((a, b) => {
-      switch (sortOrder) {
-        case "az":
-          return a.titulo.localeCompare(b.titulo);
-        case "za":
-          return b.titulo.localeCompare(a.titulo);
-        case "anoC":
-          return (a.ano || 0) - (b.ano || 0);
-        case "anoD":
-          return (b.ano || 0) - (a.ano || 0);
-        default:
-          return 0;
-      }
-    });
+  const filteredSeries = useMemo(() => {
+    return series
+      .filter((serie) =>
+        serie.titulo.toLowerCase().includes(filter.toLowerCase())
+      )
+      .sort((a, b) => {
+        switch (sortOrder) {
+          case "az":
+            return a.titulo.localeCompare(b.titulo);
+          case "za":
+            return b.titulo.localeCompare(a.titulo);
+          case "anoC":
+            return (a.ano || 0) - (b.ano || 0);
+          case "anoD":
+            return (b.ano || 0) - (a.ano || 0);
+          default:
+            return 0;
+        }
+      });
+  }, [series, filter, sortOrder]);
 
-  const totalPages = Math.ceil(filteredSeries.length / seriesPerPage);
-  const startIndex = (currentPage - 1) * seriesPerPage;
-  const currentSeries = filteredSeries.slice(startIndex, startIndex + seriesPerPage );
+  const totalPages = Math.ceil(filteredSeries.length / SERIES_PER_PAGE);
+  const startIndex = (currentPage - 1) * SERIES_PER_PAGE;
+  const currentSeries = filteredSeries.slice(
+    startIndex,
+    startIndex + SERIES_PER_PAGE
+  );
 
   const nextPage = () => {
     setCurrentPage((prev) => {
@@ -91,23 +126,19 @@ const Series: React.FC = () => {
 
   const prevPage = () => {
     setCurrentPage((prev) => {
-      const prevPage = Math.max(prev - 1, 1);
+      const prevValue = Math.max(prev - 1, 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
-      return prevPage;
+      return prevValue;
     });
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, sortOrder]);
+
   return (
-    <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
-      <NavBar
-        query={query}
-        setQuery={setQuery}
-        searching={searching}
-        handleSearch={handleSearch}
-        resetSearch={resetSearch}
-        toggleDarkMode={toggleDarkMode}
-        toggleDarkTheme={toggleDarkTheme}
-      />
+    <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
+      <NavBar toggleDarkMode={themeMode === "dark"} />
 
       <section className="series-section">
         <h2>📺 Séries</h2>
@@ -117,19 +148,15 @@ const Series: React.FC = () => {
             type="text"
             placeholder="Filtrar por nome..."
             value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className={toggleDarkMode ? "dark-input" : "light-input"}
+            onChange={(e) => setFilter(e.target.value)}
+            className={themeMode === "dark" ? "dark-input" : "light-input"}
           />
           <select
             value={sortOrder}
-            onChange={(e) => {
-              setSortOrder(e.target.value as "az" | "za" | "anoC" | "anoD");
-              setCurrentPage(1);
-            }}
-            className={toggleDarkMode ? "dark-input" : "light-input"}
+            onChange={(e) =>
+              setSortOrder(e.target.value as "az" | "za" | "anoC" | "anoD")
+            }
+            className={themeMode === "dark" ? "dark-input" : "light-input"}
           >
             <option value="az">Título A–Z</option>
             <option value="za">Título Z–A</option>
@@ -163,7 +190,7 @@ const Series: React.FC = () => {
           </div>
         )}
 
-        {filteredSeries.length > seriesPerPage && (
+        {filteredSeries.length > SERIES_PER_PAGE && (
           <div className="pagination-container">
             <button onClick={prevPage} disabled={currentPage === 1}>
               ⬅ Anterior
@@ -178,7 +205,6 @@ const Series: React.FC = () => {
         )}
       </section>
 
-      {searching && <p>Resultados da pesquisa...</p>}
     </div>
   );
 };

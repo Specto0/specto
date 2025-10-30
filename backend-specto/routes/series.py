@@ -1,6 +1,10 @@
+import asyncio
+from typing import List
+
 from fastapi import APIRouter
-import httpx
+
 from config import API_KEY, BASE_URL
+from app.utils.http_cache import cached_get_json
 
 router = APIRouter()
 IMG_BASE = "https://image.tmdb.org/t/p"
@@ -19,7 +23,7 @@ def formatar_lista(series_raw: list) -> list:
             "generos_ids": s.get("genre_ids", []),
             "data_lancamento": s.get("first_air_date"),
             "nota": s.get("vote_average"),
-            "adult": s.get("adult", False)
+            "adult": s.get("adult", False),
         }
         for s in series_raw
     ]
@@ -31,7 +35,7 @@ def formatar_detalhes(s: dict) -> dict:
         {
             "nome": c.get("name"),
             "personagem": c.get("character"),
-            "foto": f"{IMG_BASE}/w200{c['profile_path']}" if c.get("profile_path") else None
+            "foto": f"{IMG_BASE}/w200{c['profile_path']}" if c.get("profile_path") else None,
         }
         for c in s.get("credits", {}).get("cast", [])[:20]
     ]
@@ -66,98 +70,107 @@ def formatar_detalhes(s: dict) -> dict:
         "receita": None,
         "elenco": elenco,
         "reviews": reviews,
-        "videos": videos
+        "videos": videos,
     }
 
 
-# ------------------- ENDPOINTS -------------------
+async def _fetch_paginas(urls: List[str]) -> list:
+    respostas = await asyncio.gather(
+        *(cached_get_json(url) for url in urls),
+        return_exceptions=True,
+    )
+    resultados: list = []
+    for dados in respostas:
+        if isinstance(dados, Exception):
+            continue
+        resultados.extend(dados.get("results", []))
+    return resultados
+
 
 @router.get("/populares")
-def series_populares():
-    total_paginas = 5
-    series = []
-
-    for page in range(1, total_paginas + 1):
-        url = f"{BASE_URL}/tv/popular?api_key={API_KEY}&language=pt-BR&page={page}"
-        resposta = httpx.get(url).json()
-        series.extend(resposta.get("results", []))
-
-    return formatar_lista(series)   
+async def series_populares():
+    paginas = 3
+    urls = [
+        f"{BASE_URL}/tv/popular?api_key={API_KEY}&language=pt-BR&page={page}"
+        for page in range(1, paginas + 1)
+    ]
+    series = await _fetch_paginas(urls)
+    return formatar_lista(series)
 
 
 @router.get("/top-rated")
-def series_top_rated():
+async def series_top_rated():
     url = f"{BASE_URL}/tv/top_rated?api_key={API_KEY}&language=pt-BR&page=1"
-    series_raw = httpx.get(url).json().get("results", [])
-    return formatar_lista(series_raw)
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))
 
 
 @router.get("/on-air")
-def series_on_air():
+async def series_on_air():
     url = f"{BASE_URL}/tv/on_the_air?api_key={API_KEY}&language=pt-BR&page=1"
-    series_raw = httpx.get(url).json().get("results", [])
-    return formatar_lista(series_raw)
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))
 
 
 @router.get("/upcoming")
-def series_upcoming():
+async def series_upcoming():
     url = f"{BASE_URL}/tv/airing_today?api_key={API_KEY}&language=pt-BR&page=1"
-    series_raw = httpx.get(url).json().get("results", [])
-    return formatar_lista(series_raw)
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))
 
 
 @router.get("/pesquisa")
-def pesquisa_series(query: str):
+async def pesquisa_series(query: str):
     query = query.strip()
     url = f"{BASE_URL}/search/tv?api_key={API_KEY}&language=pt-BR&query={query}"
-    series_raw = httpx.get(url).json().get("results", [])
-    return formatar_lista(series_raw)
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))
 
 
 @router.get("/detalhes/{serie_id}")
-def detalhes_serie(serie_id: int):
+async def detalhes_serie(serie_id: int):
     url = f"{BASE_URL}/tv/{serie_id}?api_key={API_KEY}&language=pt-BR&append_to_response=credits,reviews,videos,images"
-    data = httpx.get(url).json()
-    return formatar_detalhes(data)
+    dados = await cached_get_json(url, ttl=600.0)
+    return formatar_detalhes(dados)
 
 
 @router.get("/{serie_id}/reviews")
-def reviews_serie(serie_id: int):
+async def reviews_serie(serie_id: int):
     url = f"{BASE_URL}/tv/{serie_id}/reviews?api_key={API_KEY}&language=pt-BR&page=1"
-    resposta = httpx.get(url).json()
+    dados = await cached_get_json(url)
     return [
         {"autor": r["author"], "conteudo": r["content"]}
-        for r in resposta.get("results", [])
+        for r in dados.get("results", [])
     ]
 
 
 @router.get("/{serie_id}/videos")
-def videos_serie(serie_id: int):
+async def videos_serie(serie_id: int):
     url = f"{BASE_URL}/tv/{serie_id}/videos?api_key={API_KEY}&language=pt-BR"
-    resposta = httpx.get(url).json()
+    dados = await cached_get_json(url)
     return [
-        {"tipo": v["type"], "site": v["site"], "chave": v["key"]}
-        for v in resposta.get("results", [])
+        {"tipo": v.get("type"), "site": v.get("site"), "chave": v.get("key")}
+        for v in dados.get("results", [])
         if v.get("site") == "YouTube"
     ]
 
 
 @router.get("/{serie_id}/elenco")
-def elenco_serie(serie_id: int):
+async def elenco_serie(serie_id: int):
     url = f"{BASE_URL}/tv/{serie_id}/credits?api_key={API_KEY}&language=pt-BR"
-    resposta = httpx.get(url).json()
+    dados = await cached_get_json(url)
     return [
         {
             "nome": c.get("name"),
             "personagem": c.get("character"),
-            "foto": f"{IMG_BASE}/w200{c['profile_path']}" if c.get("profile_path") else None
+            "foto": f"{IMG_BASE}/w200{c['profile_path']}" if c.get("profile_path") else None,
         }
-        for c in resposta.get("cast", [])[:20]
+        for c in dados.get("cast", [])[:20]
     ]
 
 
 @router.get("/genero/{genero_id}")
-def series_por_genero(genero_id: int):
+async def series_por_genero(genero_id: int):
     url = f"{BASE_URL}/discover/tv?api_key={API_KEY}&language=pt-BR&with_genres={genero_id}&page=1"
-    series_raw = httpx.get(url).json().get("results", [])
-    return formatar_lista(series_raw)
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))

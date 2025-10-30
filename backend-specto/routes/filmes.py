@@ -1,6 +1,10 @@
+import asyncio
+from typing import List
+
 from fastapi import APIRouter
-import httpx
+
 from config import API_KEY, BASE_URL
+from app.utils.http_cache import cached_get_json
 
 router = APIRouter()
 
@@ -56,103 +60,111 @@ def formatar_detalhes(f: dict) -> dict:
         "videos": [
             {"tipo": v["type"], "site": v["site"], "chave": v["key"]}
             for v in f.get("videos", {}).get("results", [])
-            if v["site"] == "YouTube"
+            if v.get("site") == "YouTube"
         ],
     }
 
 
-# ------------------- ENDPOINTS -------------------
+async def _fetch_paginas(urls: List[str]) -> list:
+    respostas = await asyncio.gather(
+        *(cached_get_json(url) for url in urls),
+        return_exceptions=True,
+    )
+    resultados: list = []
+    for dados in respostas:
+        if isinstance(dados, Exception):
+            continue
+        resultados.extend(dados.get("results", []))
+    return resultados
+
 
 @router.get("/populares")
-def filmes_populares():
-    total_paginas = 5  # limita para não ficar muito pesado
-    filmes = []
-
-    for page in range(1, total_paginas + 1):
-        url = f"{BASE_URL}/movie/popular?api_key={API_KEY}&language=pt-PT&page={page}"
-        resposta = httpx.get(url).json()
-        filmes.extend(resposta.get("results", []))
-
+async def filmes_populares():
+    paginas = 3
+    urls = [
+        f"{BASE_URL}/movie/popular?api_key={API_KEY}&language=pt-PT&page={page}"
+        for page in range(1, paginas + 1)
+    ]
+    filmes = await _fetch_paginas(urls)
     return formatar_lista(filmes)
 
 
-
 @router.get("/now-playing")
-def filmes_now_playing():
+async def filmes_now_playing():
     url = f"{BASE_URL}/movie/now_playing?api_key={API_KEY}&language=pt-PT&page=1"
-    resposta = httpx.get(url).json()
-    return formatar_lista(resposta.get("results", []))
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))
 
 
 @router.get("/upcoming")
-def filmes_upcoming():
+async def filmes_upcoming():
     url = f"{BASE_URL}/movie/upcoming?api_key={API_KEY}&language=pt-PT&page=1"
-    resposta = httpx.get(url).json()
-    return formatar_lista(resposta.get("results", []))
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))
 
 
 @router.get("/top-rated")
-def filmes_top_rated():
+async def filmes_top_rated():
     url = f"{BASE_URL}/movie/top_rated?api_key={API_KEY}&language=pt-PT&page=1"
-    resposta = httpx.get(url).json()
-    return formatar_lista(resposta.get("results", []))
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))
 
 
 @router.get("/pesquisa")
-def pesquisa_filmes(query: str):
+async def pesquisa_filmes(query: str):
     url = f"{BASE_URL}/search/movie?api_key={API_KEY}&language=pt-PT&query={query.strip()}"
-    resposta = httpx.get(url).json()
-    return formatar_lista(resposta.get("results", []))
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))
 
 
 @router.get("/detalhes/{filme_id}")
-def detalhes_filme(filme_id: int):
+async def detalhes_filme(filme_id: int):
     url = (
         f"{BASE_URL}/movie/{filme_id}"
         f"?api_key={API_KEY}&language=pt-PT"
         f"&append_to_response=credits,reviews,videos,images"
     )
-    resposta = httpx.get(url).json()
-    return formatar_detalhes(resposta)
+    dados = await cached_get_json(url, ttl=600.0)
+    return formatar_detalhes(dados)
 
 
 @router.get("/{filme_id}/reviews")
-def reviews_filme(filme_id: int):
+async def reviews_filme(filme_id: int):
     url = f"{BASE_URL}/movie/{filme_id}/reviews?api_key={API_KEY}&language=pt-PT&page=1"
-    resposta = httpx.get(url).json()
+    dados = await cached_get_json(url)
     return [
         {"autor": r["author"], "conteudo": r["content"]}
-        for r in resposta.get("results", [])
+        for r in dados.get("results", [])
     ]
 
 
 @router.get("/{filme_id}/videos")
-def videos_filme(filme_id: int):
+async def videos_filme(filme_id: int):
     url = f"{BASE_URL}/movie/{filme_id}/videos?api_key={API_KEY}&language=pt-PT"
-    resposta = httpx.get(url).json()
+    dados = await cached_get_json(url)
     return [
         {"tipo": v["type"], "site": v["site"], "chave": v["key"]}
-        for v in resposta.get("results", [])
-        if v["site"] == "YouTube"
+        for v in dados.get("results", [])
+        if v.get("site") == "YouTube"
     ]
 
 
 @router.get("/{filme_id}/elenco")
-def elenco_filme(filme_id: int):
+async def elenco_filme(filme_id: int):
     url = f"{BASE_URL}/movie/{filme_id}/credits?api_key={API_KEY}&language=pt-PT"
-    resposta = httpx.get(url).json()
+    dados = await cached_get_json(url)
     return [
         {
             "nome": c["name"],
             "personagem": c.get("character"),
             "foto": f"{IMG_BASE}/w200{c['profile_path']}" if c.get("profile_path") else None,
         }
-        for c in resposta.get("cast", [])[:20]
+        for c in dados.get("cast", [])[:20]
     ]
 
 
 @router.get("/genero/{genero_id}")
-def filmes_por_genero(genero_id: int):
+async def filmes_por_genero(genero_id: int):
     url = f"{BASE_URL}/discover/movie?api_key={API_KEY}&language=pt-PT&with_genres={genero_id}&page=1"
-    resposta = httpx.get(url).json()
-    return formatar_lista(resposta.get("results", []))
+    dados = await cached_get_json(url)
+    return formatar_lista(dados.get("results", []))

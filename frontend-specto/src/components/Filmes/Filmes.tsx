@@ -1,11 +1,24 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import "../Home/Home.css";
 import "./Filmes.css";
+import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
+import { buildApiUrl } from "../../utils/api";
 
-export type Filme = {     // Corriger Types.
+type FilmeAPI = {
+  id: number;
+  title?: string | null;
+  original_title?: string | null;
+  name?: string | null;
+  poster_path?: string | null;
+  poster?: string | null;
+  release_date?: string | null;
+  ano?: string | number | null;
+};
+
+export type Filme = {
   id: number;
   titulo: string;
   poster: string | null;
@@ -13,46 +26,66 @@ export type Filme = {     // Corriger Types.
   tipo: "filme";
 };
 
-const Filmes: React.FC = () => {
-  const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [toggleDarkMode, setToggleDarkMode] = useState(true);
+const MOVIES_PER_PAGE = 24;
+
+const normalizeTitulo = (item: FilmeAPI): string => {
+  const candidates = [
+    item.title,
+    item.original_title,
+    item.name,
+  ];
+
+  const titulo = candidates.find((value) => typeof value === "string" && value.trim());
+  return titulo ? titulo.trim() : "Sem título";
+};
+
+const normalizeAno = (value?: string | number | null): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim()) {
+    const year = Number.parseInt(value.slice(0, 4), 10);
+    return Number.isFinite(year) ? year : undefined;
+  }
+  return undefined;
+};
+
+const mapFilme = (item: FilmeAPI): Filme => ({
+  id: item.id,
+  titulo: normalizeTitulo(item),
+  poster: item.poster_path ?? item.poster ?? null,
+  ano: normalizeAno(item.release_date ?? item.ano),
+  tipo: "filme",
+});
+
+const Filmes = () => {
   const [movies, setMovies] = useState<Filme[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"az" | "za" | "anoC" | "anoD">("az");
   const [currentPage, setCurrentPage] = useState(1);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => readTheme());
 
-  const moviesPerPage = 24;
+  useEffect(() => {
+    const unsubscribe = subscribeTheme(setThemeMode);
+    return unsubscribe;
+  }, []);
 
-  // Pesquisa e tema
-  const handleSearch = () => setSearching(true);
-  const resetSearch = () => {
-    setSearching(false);
-    setQuery("");
-  };
-  const toggleDarkTheme = () => setToggleDarkMode((prev) => !prev);
-
-  // Fetch filmes
   useEffect(() => {
     setLoading(true);
-    fetch("http://127.0.0.1:8000/filmes/populares")
+    fetch(buildApiUrl("/filmes/populares"))
       .then((response) => {
         if (!response.ok) throw new Error("Erro na resposta da API");
         return response.json();
       })
       .then((data) => {
-        const filmesArray = Array.isArray(data.results) ? data.results : data;
+        const filmesArray: FilmeAPI[] = Array.isArray(data.results)
+          ? data.results
+          : data;
+        const filmesFormatados = filmesArray
+          .filter((item): item is FilmeAPI => typeof item?.id === "number")
+          .map(mapFilme);
 
-        const filmesFormatados: Filme[] = filmesArray.map((f: Filme) => ({
-          id: f.id,
-          titulo: f.titulo || f.titulo || "Sem título",
-          poster: f.poster|| f.poster || null,
-          ano: f.ano ? parseInt(f.ano.split("-")[0]) : undefined, // Corriger Types.
-          tipo: "filme",
-        }));
-
-        // Remover duplicados
         const filmesUnicos = Array.from(
           new Map(filmesFormatados.map((f) => [f.id, f])).values()
         );
@@ -63,30 +96,33 @@ const Filmes: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Filtros e ordenação
-  const filteredMovies = movies
-    .filter((movie) =>
-      movie.titulo.toLowerCase().includes(filter.toLowerCase())
-    )
-    .sort((a, b) => {
-      switch (sortOrder) {
-        case "az":
-          return a.titulo.localeCompare(b.titulo);
-        case "za":
-          return b.titulo.localeCompare(a.titulo);
-        case "anoC":
-          return (a.ano || 0) - (b.ano || 0);
-        case "anoD":
-          return (b.ano || 0) - (a.ano || 0);
-        default:
-          return 0;
-      }
-    });
+  const filteredMovies = useMemo(() => {
+    return movies
+      .filter((movie) =>
+        movie.titulo.toLowerCase().includes(filter.toLowerCase())
+      )
+      .sort((a, b) => {
+        switch (sortOrder) {
+          case "az":
+            return a.titulo.localeCompare(b.titulo);
+          case "za":
+            return b.titulo.localeCompare(a.titulo);
+          case "anoC":
+            return (a.ano || 0) - (b.ano || 0);
+          case "anoD":
+            return (b.ano || 0) - (a.ano || 0);
+          default:
+            return 0;
+        }
+      });
+  }, [movies, filter, sortOrder]);
 
-  // Paginação
-  const totalPages = Math.ceil(filteredMovies.length / moviesPerPage);
-  const startIndex = (currentPage - 1) * moviesPerPage;
-  const currentMovies = filteredMovies.slice(startIndex, startIndex + moviesPerPage);
+  const totalPages = Math.ceil(filteredMovies.length / MOVIES_PER_PAGE);
+  const startIndex = (currentPage - 1) * MOVIES_PER_PAGE;
+  const currentMovies = filteredMovies.slice(
+    startIndex,
+    startIndex + MOVIES_PER_PAGE
+  );
 
   const nextPage = () => {
     setCurrentPage((prev) => {
@@ -98,23 +134,19 @@ const Filmes: React.FC = () => {
 
   const prevPage = () => {
     setCurrentPage((prev) => {
-      const prevPage = Math.max(prev - 1, 1);
+      const prevValue = Math.max(prev - 1, 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
-      return prevPage;
+      return prevValue;
     });
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, sortOrder]);
+
   return (
-    <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
-      <NavBar
-        query={query}
-        setQuery={setQuery}
-        searching={searching}
-        handleSearch={handleSearch}
-        resetSearch={resetSearch}
-        toggleDarkMode={toggleDarkMode}
-        toggleDarkTheme={toggleDarkTheme}
-      />
+    <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
+      <NavBar toggleDarkMode={themeMode === "dark"} />
 
       <section className="filmes-section">
         <h2>🎬 Filmes</h2>
@@ -124,18 +156,15 @@ const Filmes: React.FC = () => {
             type="text"
             placeholder="Filtrar por nome..."
             value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className={toggleDarkMode ? "dark-input" : "light-input"}
+            onChange={(e) => setFilter(e.target.value)}
+            className={themeMode === "dark" ? "dark-input" : "light-input"}
           />
           <select
             value={sortOrder}
             onChange={(e) =>
               setSortOrder(e.target.value as "az" | "za" | "anoC" | "anoD")
             }
-            className={toggleDarkMode ? "dark-input" : "light-input"}
+            className={themeMode === "dark" ? "dark-input" : "light-input"}
           >
             <option value="az">Título A–Z</option>
             <option value="za">Título Z–A</option>
@@ -169,7 +198,7 @@ const Filmes: React.FC = () => {
           </div>
         )}
 
-        {filteredMovies.length > moviesPerPage && (
+        {filteredMovies.length > MOVIES_PER_PAGE && (
           <div className="pagination-container">
             <button onClick={prevPage} disabled={currentPage === 1}>
               ⬅ Anterior
@@ -184,7 +213,6 @@ const Filmes: React.FC = () => {
         )}
       </section>
 
-      {searching && <p>Resultados da pesquisa...</p>}
     </div>
   );
 };

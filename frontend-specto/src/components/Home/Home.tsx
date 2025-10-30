@@ -5,6 +5,8 @@ import NavBar from "../NavBar/NavBar.tsx";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner.tsx";
 import "../NavBar/NavBar.css";
 import "../Perfil/Perfil.css";
+import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
+import { buildApiUrl } from "../../utils/api";
 
 export type ItemMedia = {
   id: number;
@@ -71,12 +73,12 @@ export default function Home() {
     setLoading(true);
 
     const endpoints = [
-      { url: "http://127.0.0.1:8000/filmes/populares", setter: setFilmesPopulares, mapper: mapFilme },
-      { url: "http://127.0.0.1:8000/filmes/now-playing", setter: setFilmesNowPlaying, mapper: mapFilme },
-      { url: "http://127.0.0.1:8000/filmes/top-rated", setter: setFilmesTopRated, mapper: mapFilme },
-      { url: "http://127.0.0.1:8000/series/populares", setter: setSeriesPopulares, mapper: mapSerie },
-      { url: "http://127.0.0.1:8000/series/on-air", setter: setSeriesOnAir, mapper: mapSerie },
-      { url: "http://127.0.0.1:8000/series/top-rated", setter: setSeriesTopRated, mapper: mapSerie },
+      { url: buildApiUrl("/filmes/populares"), setter: setFilmesPopulares, mapper: mapFilme },
+      { url: buildApiUrl("/filmes/now-playing"), setter: setFilmesNowPlaying, mapper: mapFilme },
+      { url: buildApiUrl("/filmes/top-rated"), setter: setFilmesTopRated, mapper: mapFilme },
+      { url: buildApiUrl("/series/populares"), setter: setSeriesPopulares, mapper: mapSerie },
+      { url: buildApiUrl("/series/on-air"), setter: setSeriesOnAir, mapper: mapSerie },
+      { url: buildApiUrl("/series/top-rated"), setter: setSeriesTopRated, mapper: mapSerie },
     ];
 
     Promise.all(endpoints.map(e => fetch(e.url).then(res => res.json())))
@@ -101,7 +103,7 @@ export default function Home() {
     setLoading(true);
     setSearching(true);
 
-    fetch(`http://127.0.0.1:8000/pesquisa?query=${encodeURIComponent(query)}`)
+    fetch(buildApiUrl(`/pesquisa?query=${encodeURIComponent(query)}`))
       .then(res => res.json())
       .then(data => {
         // API formats responses differently, handle both cases
@@ -205,20 +207,57 @@ export default function Home() {
     );
   };
 
-  const [toggleDarkMode, setToggleDarkMode] = useState(true);
-  const toggleDarkTheme = () => setToggleDarkMode(!toggleDarkMode);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => readTheme());
+
+  useEffect(() => {
+    const unsubscribe = subscribeTheme(setThemeMode);
+    return unsubscribe;
+  }, []);
 
   return (
-    <div className={`home-container ${toggleDarkMode ? "dark" : "light"}`}>
-      <NavBar
-        query={query}
-        setQuery={setQuery}
-        searching={searching}
-        handleSearch={handleSearch}
-        resetSearch={resetSearch}
-        toggleDarkMode={toggleDarkMode}
-        toggleDarkTheme={toggleDarkTheme}
-      />
+    <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
+      <NavBar toggleDarkMode={themeMode === "dark"} />
+
+      <section className="home-search">
+        <form onSubmit={handleSearch} className="home-search-form">
+          <div className="search-box">
+            <span className="search-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-4.35-4.35M16.65 16.65A7.5 7.5 0 1116.65 2.5a7.5 7.5 0 010 14.15z"
+                />
+              </svg>
+            </span>
+            <input
+              type="text"
+              placeholder="Procura por filmes ou séries..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="navbar-input"
+            />
+          </div>
+          <button type="submit" className="home-search-submit">
+            Pesquisar
+          </button>
+          {searching && (
+            <button
+              type="button"
+              className="home-search-reset"
+              onClick={resetSearch}
+            >
+              Limpar
+            </button>
+          )}
+        </form>
+      </section>
 
       {loading ? (
         <LoadingSpinner color="#3b82f6" size="large" />
