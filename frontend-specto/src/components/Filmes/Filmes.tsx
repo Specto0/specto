@@ -3,15 +3,19 @@ import { Link } from "react-router-dom";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import "../Home/Home.css";
+import "../Perfil/Perfil.css";
 import "./Filmes.css";
 import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
 import { buildApiUrl } from "../../utils/api";
 
 type FilmeAPI = {
   id: number;
+  titulo?: string | null;
   title?: string | null;
   original_title?: string | null;
   name?: string | null;
+  original_name?: string | null;
+  nome?: string | null;
   poster_path?: string | null;
   poster?: string | null;
   release_date?: string | null;
@@ -30,9 +34,12 @@ const MOVIES_PER_PAGE = 24;
 
 const normalizeTitulo = (item: FilmeAPI): string => {
   const candidates = [
+    item.titulo,
     item.title,
     item.original_title,
     item.name,
+    item.original_name,
+    item.nome,
   ];
 
   const titulo = candidates.find((value) => typeof value === "string" && value.trim());
@@ -57,6 +64,12 @@ const mapFilme = (item: FilmeAPI): Filme => ({
   ano: normalizeAno(item.release_date ?? item.ano),
   tipo: "filme",
 });
+
+const getPosterUrl = (poster: string | null) => {
+  if (!poster) return "/imagens/placeholder.png";
+  if (poster.startsWith("http")) return poster;
+  return `https://image.tmdb.org/t/p/w500${poster}`;
+};
 
 const Filmes = () => {
   const [movies, setMovies] = useState<Filme[]>([]);
@@ -179,17 +192,26 @@ const Filmes = () => {
           <div className="grid-filmes">
             {currentMovies.length > 0 ? (
               currentMovies.map((movie) => (
-                <Link to={`/filme/${movie.id}`} key={movie.id} className="card">
-                  <img
-                    src={
-                      movie.poster
-                        ? `https://image.tmdb.org/t/p/w500${movie.poster}`
-                        : "/imagens/placeholder.png"
-                    }
-                    alt={movie.titulo}
-                  />
-                  <h3>{movie.titulo}</h3>
-                  {movie.ano && <p>{movie.ano}</p>}
+                <Link
+                  to={`/filme/${movie.id}`}
+                  key={movie.id}
+                  className="perfil-card home-card filmes-card"
+                >
+                  <div className="perfil-card-thumb home-card-thumb filmes-card-thumb">
+                    <img src={getPosterUrl(movie.poster)} alt={movie.titulo} />
+                  </div>
+                  <div className="perfil-card-body home-card-body filmes-card-body">
+                    <h3 className="perfil-card-title">{movie.titulo}</h3>
+                    <div className="perfil-card-info-top">
+                      <span className="perfil-card-type">Filme</span>
+                      {movie.ano && (
+                        <>
+                          <span className="perfil-card-sep">·</span>
+                          <span className="filmes-card-year">{movie.ano}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </Link>
               ))
             ) : (

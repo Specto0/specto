@@ -3,15 +3,19 @@ import { Link } from "react-router-dom";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import "../Home/Home.css";
+import "../Perfil/Perfil.css";
 import "./Series.css";
 import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
 import { buildApiUrl } from "../../utils/api";
 
 type SerieAPI = {
   id: number;
+  titulo?: string | null;
   name?: string | null;
   original_name?: string | null;
-  titulo?: string | null;
+  title?: string | null;
+  original_title?: string | null;
+  nome?: string | null;
   poster_path?: string | null;
   poster?: string | null;
   first_air_date?: string | null;
@@ -29,7 +33,14 @@ export type Serie = {
 const SERIES_PER_PAGE = 24;
 
 const normalizeTitulo = (item: SerieAPI): string => {
-  const candidates = [item.titulo, item.name, item.original_name];
+  const candidates = [
+    item.titulo,
+    item.name,
+    item.original_name,
+    item.title,
+    item.original_title,
+    item.nome,
+  ];
   const titulo = candidates.find((value) => typeof value === "string" && value.trim());
   return titulo ? titulo.trim() : "Sem título";
 };
@@ -52,6 +63,12 @@ const mapSerie = (item: SerieAPI): Serie => ({
   ano: normalizeAno(item.first_air_date ?? item.ano),
   tipo: "serie",
 });
+
+const getPosterUrl = (poster: string | null) => {
+  if (!poster) return "/imagens/placeholder.png";
+  if (poster.startsWith("http")) return poster;
+  return `https://image.tmdb.org/t/p/w500${poster}`;
+};
 
 const Series = () => {
   const [series, setSeries] = useState<Serie[]>([]);
@@ -171,17 +188,26 @@ const Series = () => {
           <div className="grid-series">
             {currentSeries.length > 0 ? (
               currentSeries.map((serie) => (
-                <Link to={`/serie/${serie.id}`} key={serie.id} className="card">
-                  <img
-                    src={
-                      serie.poster
-                        ? `https://image.tmdb.org/t/p/w500${serie.poster}`
-                        : "/imagens/placeholder.png"
-                    }
-                    alt={serie.titulo}
-                  />
-                  <h3>{serie.titulo}</h3>
-                  {serie.ano && <p>{serie.ano}</p>}
+                <Link
+                  to={`/serie/${serie.id}`}
+                  key={serie.id}
+                  className="perfil-card home-card series-card"
+                >
+                  <div className="perfil-card-thumb home-card-thumb series-card-thumb">
+                    <img src={getPosterUrl(serie.poster)} alt={serie.titulo} />
+                  </div>
+                  <div className="perfil-card-body home-card-body series-card-body">
+                    <h3 className="perfil-card-title">{serie.titulo}</h3>
+                    <div className="perfil-card-info-top">
+                      <span className="perfil-card-type">Série</span>
+                      {serie.ano && (
+                        <>
+                          <span className="perfil-card-sep">·</span>
+                          <span className="series-card-year">{serie.ano}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </Link>
               ))
             ) : (

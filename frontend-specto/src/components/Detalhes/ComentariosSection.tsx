@@ -71,6 +71,44 @@ const mapComentario = (comentario: ComentarioApi): ComentarioNode => ({
   replies: comentario.replies.map(mapComentario),
 });
 
+const ordenarPorData = (lista: ComentarioNode[]): ComentarioNode[] =>
+  [...lista].sort(
+    (a, b) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+
+const adicionarComentario = (
+  lista: ComentarioNode[],
+  novoComentario: ComentarioNode,
+  comentarioPaiId: number | null
+): ComentarioNode[] => {
+  if (comentarioPaiId === null) {
+    return ordenarPorData([...lista, novoComentario]);
+  }
+
+  return lista.map((comentario) => {
+    if (comentario.id === comentarioPaiId) {
+      return {
+        ...comentario,
+        replies: ordenarPorData([...comentario.replies, novoComentario]),
+      };
+    }
+
+    if (comentario.replies.length) {
+      return {
+        ...comentario,
+        replies: adicionarComentario(
+          comentario.replies,
+          novoComentario,
+          comentarioPaiId
+        ),
+      };
+    }
+
+    return comentario;
+  });
+};
+
 export default function ComentariosSection({
   contentId,
   contentType,
@@ -212,7 +250,17 @@ export default function ComentariosSection({
         throw new Error(mensagem);
       }
 
-      await carregarComentarios();
+      const data = (await response.json()) as ComentarioApi;
+      const comentarioNormalizado = mapComentario(data);
+
+      setComentarios((prev) =>
+        adicionarComentario(prev, comentarioNormalizado, comentarioPaiId)
+      );
+
+      if (comentarioPaiId !== null) {
+        setRespostasVisiveis((prev) => ({ ...prev, [comentarioPaiId]: true }));
+      }
+
       return true;
     } catch (err) {
       setAlerta(
