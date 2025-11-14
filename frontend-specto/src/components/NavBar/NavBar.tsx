@@ -5,6 +5,7 @@ import "../Home/Home.css";
 import { applyTheme, coerceTheme, type ThemeMode } from "../../utils/theme";
 import { resolveAvatarUrl } from "../../utils/avatar";
 import { buildApiUrl } from "../../utils/api";
+import RandomMovieGame from "./RandomMovieGame";
 
 type NavBarProps = {
   toggleDarkMode: boolean;
@@ -39,6 +40,7 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem("token"));
   const [user, setUser] = useState<UserInfo | null>(() => getStoredUser());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isGameOpen, setIsGameOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -150,141 +152,151 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
   }, [user]);
 
   return (
-    <nav className="navbar">
-      <div className="button-group">
-        <button
-          type="button"
-          onClick={() => navigate("/home")}
-          className="btn-home"
-        >
-          <img
-            src={
-              toggleDarkMode
-                ? "/assets/images/spectologo.png"
-                : "/assets/images/spectologodark1.png"
-            }
-            alt="Specto logo"
-            className="logo-specto"
-          />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate("/filmes")}
-          className="btns-secondary"
-        >
-          Filmes
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/series")}
-          className="btns-secondary"
-        >
-          Séries
-        </button>
-      </div>
-
-      {!isAuthenticated && (
-        <div className="navbar-actions">
+    <>
+      <nav className="navbar">
+        <div className="button-group">
           <button
             type="button"
-            onClick={handleAuthClick}
-            className="btn btn-auth"
+            onClick={() => navigate("/home")}
+            className="btn-home"
           >
-            Login
+            <img
+              src={
+                toggleDarkMode
+                  ? "/assets/images/spectologo.png"
+                  : "/assets/images/spectologodark1.png"
+              }
+              alt="Specto logo"
+              className="logo-specto"
+            />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/filmes")}
+            className="btns-secondary"
+          >
+            Filmes
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/series")}
+            className="btns-secondary"
+          >
+            Séries
+          </button>
+          <button
+            type="button"
+            className="btn-random-game"
+            onClick={() => setIsGameOpen(true)}
+          >
+            Random Movie Game
           </button>
         </div>
-      )}
 
-      {isAuthenticated && (
-        <div className="navbar-profile" ref={dropdownRef}>
-          <button
-            type="button"
-            className="profile-trigger"
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-haspopup="true"
-            aria-expanded={isMenuOpen}
-            aria-label="Abrir menu do utilizador"
-          >
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt="Avatar do utilizador"
-                className="user-avatar-img"
-              />
-            ) : user?.username ? (
-              <span className="user-initials">{userInitials}</span>
-            ) : (
-              <img
-                src="/assets/images/perfil.png"
-                alt="Perfil"
-                className="user-logo"
-              />
-            )}
-          </button>
-          <div className={`dropdown ${isMenuOpen ? "open-menu" : ""}`}>
-            <div className="sub-dropdown">
-              <div className="user-info">
-                <div className="user-avatar">
-                  {user?.avatar_url ? (
-                    <img
-                      src={user.avatar_url}
-                      alt="Avatar do utilizador"
-                      className="user-avatar-img"
-                    />
-                  ) : user?.username ? (
-                    <span>{userInitials}</span>
-                  ) : (
-                    <img src="/assets/images/perfil.png" alt="Perfil" />
-                  )}
+        {!isAuthenticated && (
+          <div className="navbar-actions">
+            <button
+              type="button"
+              onClick={handleAuthClick}
+              className="btn btn-auth"
+            >
+              Login
+            </button>
+          </div>
+        )}
+
+        {isAuthenticated && (
+          <div className="navbar-profile" ref={dropdownRef}>
+            <button
+              type="button"
+              className="profile-trigger"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              aria-haspopup="true"
+              aria-expanded={isMenuOpen}
+              aria-label="Abrir menu do utilizador"
+            >
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt="Avatar do utilizador"
+                  className="user-avatar-img"
+                />
+              ) : user?.username ? (
+                <span className="user-initials">{userInitials}</span>
+              ) : (
+                <img
+                  src="/assets/images/perfil.png"
+                  alt="Perfil"
+                  className="user-logo"
+                />
+              )}
+            </button>
+            <div className={`dropdown ${isMenuOpen ? "open-menu" : ""}`}>
+              <div className="sub-dropdown">
+                <div className="user-info">
+                  <div className="user-avatar">
+                    {user?.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt="Avatar do utilizador"
+                        className="user-avatar-img"
+                      />
+                    ) : user?.username ? (
+                      <span>{userInitials}</span>
+                    ) : (
+                      <img src="/assets/images/perfil.png" alt="Perfil" />
+                    )}
+                  </div>
+                  <div className="user-meta">
+                    <h3 title={user?.username || "Utilizador"}>{user?.username || "Utilizador"}</h3>
+                    {user?.email && <p title={user.email}>{user.email}</p>}
+                  </div>
                 </div>
-                <div className="user-meta">
-                  <h3 title={user?.username || "Utilizador"}>{user?.username || "Utilizador"}</h3>
-                  {user?.email && <p title={user.email}>{user.email}</p>}
-                </div>
+
+                <hr />
+
+                <button
+                  type="button"
+                  className="sub-dropdown-link"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate("/perfil");
+                  }}
+                >
+                  <img src="/assets/images/images-menu/profile.png" alt="" />
+                  <p>Ver Perfil</p>
+                </button>
+
+                <button
+                  type="button"
+                  className="sub-dropdown-link"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate("/perfil/editar");
+                  }}
+                >
+                  <img src="/assets/images/images-menu/setting.png" alt="" />
+                  <p>Editar Perfil</p>
+                </button>
+
+                <button
+                  type="button"
+                  className="sub-dropdown-link logout"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleAuthClick();
+                  }}
+                >
+                  <img src="/assets/images/images-menu/logout.png" alt="" />
+                  <p>Terminar sessão</p>
+                </button>
               </div>
-
-              <hr />
-
-              <button
-                type="button"
-                className="sub-dropdown-link"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  navigate("/perfil");
-                }}
-              >
-                <img src="/assets/images/images-menu/profile.png" alt="" />
-                <p>Ver Perfil</p>
-              </button>
-
-              <button
-                type="button"
-                className="sub-dropdown-link"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  navigate("/perfil/editar");
-                }}
-              >
-                <img src="/assets/images/images-menu/setting.png" alt="" />
-                <p>Editar Perfil</p>
-              </button>
-
-              <button
-                type="button"
-                className="sub-dropdown-link logout"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handleAuthClick();
-                }}
-              >
-                <img src="/assets/images/images-menu/logout.png" alt="" />
-                <p>Terminar sessão</p>
-              </button>
             </div>
           </div>
-        </div>
-      )}
-    </nav>
+        )}
+      </nav>
+      <RandomMovieGame isOpen={isGameOpen} onClose={() => setIsGameOpen(false)} />
+    </>
   );
 }

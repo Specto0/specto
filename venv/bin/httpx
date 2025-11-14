@@ -1,4 +1,6 @@
-#!/Users/paulochurrasco/Desktop/Escolinha/2ANO/LP/specto/venv/bin/python
+#!/bin/sh
+'''exec' "/Users/daniel/Desktop/ESTG/LP - Specto/specto/venv/bin/python" "$0" "$@"
+' '''
 import sys
 from httpx import main
 if __name__ == '__main__':

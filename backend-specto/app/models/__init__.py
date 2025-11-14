@@ -6,7 +6,7 @@ from sqlalchemy import (
     Date, TIMESTAMP, text, Numeric, Index
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import CITEXT
+from sqlalchemy.dialects.postgresql import CITEXT, JSONB
 
 class Base(DeclarativeBase):
     pass
@@ -173,3 +173,28 @@ Index("filme_generos_filme_idx", FilmeGenero.filme_id)
 Index("filme_generos_genero_idx", FilmeGenero.genero_id)
 Index("serie_generos_serie_idx", SerieGenero.serie_id)
 Index("serie_generos_genero_idx", SerieGenero.genero_id)
+
+
+class TmdbCachedFilme(Base):
+    __tablename__ = "tmdb_cached_filmes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tmdb_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    genero_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    ordem: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    cached_em: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+        server_onupdate=text("now()"),
+    )
+
+
+Index(
+    "tmdb_cache_tmdb_genero_unq",
+    TmdbCachedFilme.tmdb_id,
+    TmdbCachedFilme.genero_id,
+    unique=True,
+)
+Index("tmdb_cache_genero_idx", TmdbCachedFilme.genero_id)
