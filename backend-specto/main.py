@@ -98,14 +98,14 @@ async def me(request: Request, user = Depends(auth.get_current_user)):
     return auth.user_to_read(user, request)
 
 # ---------- Log das rotas no arranque (debug) ----------
-@app.on_event("startup")
-async def _debug_routes():
-    print("Rotas carregadas:")
-    for r in app.routes:
-        try:
-            print(r.path, list(r.methods))
-        except Exception:
-            pass
+# @app.on_event("startup")
+# async def _debug_routes():
+#   print("Rotas carregadas:")
+#    for r in app.routes:
+#        try:
+#            print(r.path, list(r.methods))
+#        except Exception:
+#            pass
 
 
 @app.on_event("shutdown")

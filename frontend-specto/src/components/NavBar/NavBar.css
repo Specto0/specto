@@ -145,21 +145,37 @@
 }
 
 .btn-random-game {
-  border: none;
-  border-radius: 999px;
-  padding: 8px 18px;
-  background: linear-gradient(120deg, #2563eb, #933ffe);
-  color: #f8fafc;
+  font-size: 15px;
   font-weight: 600;
+  padding: 12px 26px;
+  border-radius: 12px;
+  border: none;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.35);
+  background: linear-gradient(120deg, #2563eb, #933ffe);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  backdrop-filter: blur(6px);
+  transition: 
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.25s ease;
 }
 
 .btn-random-game:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  opacity: 0.95;
 }
+
+.btn-random-game:focus {
+  outline: none;
+  border: none;
+}
+
+
 
 .navbar-actions {
   display: flex;
@@ -173,6 +189,7 @@
   align-items: center;
 }
 
+
 .profile-trigger {
   border: none;
   background: transparent;
@@ -181,6 +198,11 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+.profile-trigger:focus {
+  outline: none;
+  border: none;
 }
 
 .profile-trigger:disabled {
@@ -284,25 +306,39 @@ input:checked + .slider:before {
   border-radius: 24px;
 }
 
+
+
 .btn-auth {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 25px;
+  background: transparent;
+  height: auto;
   font-weight: 600;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #fff;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-icon {
+  width: 18px;
+  height: auto;
+  margin-right: 8px;
+  filter: invert(1);
 }
 
 .btn-auth:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.35);
+  height: auto;
+  background-color: rgba(59, 100, 246, 0.5);
+  border: 1px rgba(59, 100, 246, 0.5);
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.home-container.light .btn-auth {
-  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-  color: #fff;
-}
 
 .user-logo {
   width: 44px;
@@ -348,6 +384,7 @@ input:checked + .slider:before {
   transform: translateY(0);
   pointer-events: auto;
 }
+
 
 .sub-dropdown {
   position: relative;
@@ -466,6 +503,11 @@ input:checked + .slider:before {
   gap: 10px;
   border-radius: 10px;
   transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sub-dropdown-link:focus {
+  outline: none;
+  border: none;
 }
 
 .sub-dropdown-link p {

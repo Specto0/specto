@@ -185,6 +185,8 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
           >
             Séries
           </button>
+          
+          {isAuthenticated && (
           <button
             type="button"
             className="btn-random-game"
@@ -192,6 +194,7 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
           >
             Random Movie Game
           </button>
+          )}
         </div>
 
         {!isAuthenticated && (
@@ -201,6 +204,10 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
               onClick={handleAuthClick}
               className="btn btn-auth"
             >
+              <img
+                src="/assets/images/user.png"
+                className="login-icon"
+              />
               Login
             </button>
           </div>

@@ -83,7 +83,7 @@ section:last-child {
 section h2 {
   margin-bottom: 10px;
   font-size: 22px;
-  border-left: 4px solid #e50914;
+  border-left: 4px solid #4db6f0;
   padding-left: 8px;
   margin-left: 20px;
 }
@@ -194,6 +194,21 @@ p {
   border: 5px;
 }
 
+.home-container.light .perfil-card-title {
+  color: #000000;
+}
+
+  .home-container.light .btn-random-game {
+  background: rgba(59, 100, 246, 0.5);
+   color: #fff
+}
+
+.home-container.light .btn-random-game:hover {
+  box-shadow: rgba(59, 100, 246, 0.5);
+  border: 1px rgba(59, 100, 246, 0.5);}
+
+
+
  /* DarkMode */
 
  .home-container.dark {
@@ -239,6 +254,19 @@ p {
   border: 5px;
 }
 
+.home-container.dark .perfil-card-title {
+  color: #fff;
+}
+
+.home-container.dark .btn-random-game {
+   background: rgba(59, 100, 246, 0.5);
+   color: #fff
+}
+
+.home-container.dark .btn-random-game:hover {
+  box-shadow: rgba(59, 100, 246, 0.5);
+  border: 1px rgba(59, 100, 246, 0.5);
+}
 
 /* -------------------- Responsividade -------------------- */
 @media (max-width: 768px) {

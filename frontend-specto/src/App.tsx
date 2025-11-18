@@ -23,8 +23,8 @@ export default function App() {
         <Route path="/favoritos" element={<Home />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/perfil/editar" element={<PerfilEditar />} />
-        <Route path="/Registar" element={<Registar />} />
-        <Route path="/Login" element={<Login />} />
+        <Route path="/register" element={<Registar />} />
+        <Route path="/login" element={<Login />} />
         <Route path="*" element={<Home />} />
         
       </Routes>

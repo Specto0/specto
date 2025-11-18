@@ -197,10 +197,20 @@
   transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.perfil-theme-option:focus {
+  outline: none;
+  border: none;
+}
+
 .perfil-theme-option.ativo {
   background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: #ffffff;
   box-shadow: 0 12px 20px rgba(37, 99, 235, 0.35);
+}
+
+.perfil-theme-option.ativo:focus {
+  outline: none;
+  border: none;
 }
 
 .home-container.light .perfil-theme-option {
@@ -311,6 +321,12 @@
 .perfil-secondary-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 18px 24px rgba(148, 163, 184, 0.25);
+}
+
+.perfil-secondary-btn:focus,
+.perfil-primary-btn:focus {
+  outline: none;
+  border: none;
 }
 
 .home-container.light .perfil-secondary-btn {

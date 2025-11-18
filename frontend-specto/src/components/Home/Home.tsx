@@ -236,13 +236,13 @@ export default function Home() {
                 />
               </svg>
             </span>
-            <input
-              type="text"
-              placeholder="Procura por filmes ou séries..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="navbar-input"
-            />
+              <input
+                type="text"
+                placeholder="Procura por filmes ou séries..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="navbar-input"
+              />
           </div>
           <button type="submit" className="home-search-submit">
             Pesquisar
