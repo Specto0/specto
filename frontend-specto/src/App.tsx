@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./components/Home/Home";
+import LandingPage from "./components/LandingPage/LandingPage";
 import FilmesDetalhes from "./components/Detalhes/FilmesDetalhes";
-import SeriesDetalhes from "./components/Detalhes/SeriesDetalhes"; 
-import Filmes from "./components/Filmes/Filmes";       
+import SeriesDetalhes from "./components/Detalhes/SeriesDetalhes";
+import Filmes from "./components/Filmes/Filmes";
 import Series from "./components/Series/Series";
 import Registar from "./components/Registar/Registar";
 import Login from "./components/Login/Login";
@@ -15,6 +16,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/home" element={<Home />} />
         <Route path="/filme/:id" element={<FilmesDetalhes />} />
         <Route path="/serie/:id" element={<SeriesDetalhes />} />
@@ -26,7 +28,7 @@ export default function App() {
         <Route path="/register" element={<Registar />} />
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Home />} />
-        
+
       </Routes>
     </BrowserRouter>
   );
