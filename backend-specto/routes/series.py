@@ -174,3 +174,9 @@ async def series_por_genero(genero_id: int):
     url = f"{BASE_URL}/discover/tv?api_key={API_KEY}&language=pt-BR&with_genres={genero_id}&page=1"
     dados = await cached_get_json(url)
     return formatar_lista(dados.get("results", []))
+
+@router.get("/{serie_id}/onde-assistir")
+async def onde_assistir_serie(serie_id: int,pais: str = "PT"):
+    url = f"{BASE_URL}/tv/{serie_id}/watch/providers?api_key={API_KEY}"
+    dados = await cached_get_json(url)
+    return dados.get("results", {}).get(pais, {})

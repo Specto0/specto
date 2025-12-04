@@ -188,7 +188,8 @@
 }
 
 .detalhes-section-header h2 {
-  margin: 0;
+  margin: auto;
+  margin-left: 20px;
   font-size: 1.6rem;
   color: #f8fafc;
 }
@@ -868,6 +869,82 @@
   color: #1d4ed8;
 }
 
+/* Onde Assistir Section Styles */
+.onde-assistir-section {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 20px;
+}
+
+.titulo-onde-assistir {
+  margin-top: 50px;
+  margin-left: 20px;
+}
+
+.onde-assistir-section .detalhes-section h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #f8fafc;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.providers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.provider-card {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 16px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  cursor: pointer;
+}
+
+.provider-card:hover {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.provider-card img {
+  width: 100%;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.provider-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #f8fafc;
+}
+
+/* Light Theme Variants for Onde Assistir */
+.home-container.light .onde-assistir-section .detalhes-section h3 {
+  color: #0f172a;
+}
+
+.home-container.light .provider-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.home-container.light .provider-card:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.home-container.light .provider-card p {
+  color: #1e293b;
+}
+
+.home-container.light .onde-assistir-section {
+  background-color: #f1f5f9;
+}
+
 @media (max-width: 1024px) {
   .detalhes-container {
     padding: 28px 20px 72px;
@@ -909,6 +986,10 @@
 
   .detalhes-meta {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .providers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
 
   .detalhes-section {

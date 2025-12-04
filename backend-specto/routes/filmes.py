@@ -252,3 +252,9 @@ async def filmes_por_genero(
     filmes = formatar_lista(filmes_raw)
     await _upsert_genre_cache(session, genero_id, filmes)
     return filmes
+
+@router.get("/{filme_id}/onde-assistir")
+async def onde_assistir_filme(filme_id: int, pais: str = "PT"):
+    url = f"{BASE_URL}/movie/{filme_id}/watch/providers?api_key={API_KEY}"
+    dados = await cached_get_json(url)
+    return dados.get("results", {}).get(pais, {})

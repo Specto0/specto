@@ -48,6 +48,7 @@ export default function SeriesDetalhes() {
   const [modalMessage, setModalMessage] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTrailerIndex, setActiveTrailerIndex] = useState(0);
+  const [ondeAssistir, setOndeAssistir] = useState<any | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeTheme(setThemeMode);
@@ -131,6 +132,24 @@ export default function SeriesDetalhes() {
 
     fetchSerie();
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    
+    const fetchOndeAssistir = async () => {
+      try {
+        const res = await fetch(buildApiUrl(`/series/${id}/onde-assistir?pais=PT`));
+        if (!res.ok) throw new Error("Erro ao buscar onde assistir");
+        const data = await res.json();
+        setOndeAssistir(data);
+      } catch (err) {
+        console.error("Erro ao carregar onde assistir:", err);
+      }
+    };
+  
+    fetchOndeAssistir();
+  }, [id]);
+
 
   useEffect(() => {
     if (!serie || !isAuthenticated) {
@@ -481,6 +500,72 @@ export default function SeriesDetalhes() {
             </div>
           </div>
         </section>
+
+        {ondeAssistir && (
+  <section className="detalhes-section onde-assistir-section">
+    <div className="detalhes-section-header">
+      <h2>Onde Assistir</h2>
+    </div>
+
+    {ondeAssistir.flatrate?.length > 0 && (
+      <>
+        <div className="titulo-onde-assistir">
+          <h3>Streaming</h3>
+        </div>
+        <div className="providers-grid">
+          {ondeAssistir.flatrate.map((prov: any) => (
+            <div key={prov.provider_name} className="provider-card">
+              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+              <p>{prov.provider_name}</p>
+            </div>
+          ))}
+        </div>
+      </>
+    )}
+
+    {ondeAssistir.rent?.length > 0 && (
+      <>
+        <div className="titulo-onde-assistir">
+          <h3>Alugar</h3>
+        </div>
+        <div className="providers-grid">
+          {ondeAssistir.rent.map((prov: any) => (
+            <div key={prov.provider_name} className="provider-card">
+              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+              <p>{prov.provider_name}</p>
+            </div>
+          ))}
+        </div>
+      </>
+    )}
+
+    {ondeAssistir.buy?.length > 0 && (
+      <>
+        <div className="titulo-onde-assistir">
+          <h3>Comprar</h3>
+        </div>
+        <div className="providers-grid">
+          {ondeAssistir.buy.map((prov: any) => (
+            <div key={prov.provider_name} className="provider-card">
+              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+              <p>{prov.provider_name}</p>
+            </div>
+          ))}
+        </div>
+      </>
+    )}
+
+    {(!ondeAssistir.flatrate?.length &&
+      !ondeAssistir.rent?.length &&
+      !ondeAssistir.buy?.length) && (
+      <p className="detalhes-sem-plataformas">
+        Não está disponível em nenhuma plataforma de streaming em Portugal.
+      </p>
+    )}
+  </section>
+)}
+
+
 
         {activeTrailer && (
           <section className="detalhes-section detalhes-trailer-section">
