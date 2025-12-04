@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import imghdr
 from pathlib import Path
 from typing import Optional
 from uuid import uuid4
+import mimetypes  # <- substitui imghdr
 
 from fastapi import HTTPException, UploadFile, status
 from starlette.requests import Request
@@ -19,19 +19,32 @@ ALLOWED_MIME_TYPES = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
+ALLOWED_EXTENSIONS = {
+    ".jpg": ".jpg",
+    ".jpeg": ".jpg",
+    ".png": ".png",
+    ".webp": ".webp",
+}
 
 
 def _ensure_extension(file: UploadFile, first_chunk: bytes) -> str:
     """Infer a safe extension for the uploaded file."""
+    # 1) Tentar pelo content-type enviado pelo cliente
     if file.content_type in ALLOWED_MIME_TYPES:
         return ALLOWED_MIME_TYPES[file.content_type]
 
-    guessed = imghdr.what(None, first_chunk)
-    if guessed == "jpeg":
-        return ".jpg"
-    if guessed in {"png", "webp"}:
-        return f".{guessed}"
+    # 2) Tentar pela extensão do nome do ficheiro
+    if file.filename:
+        ext = Path(file.filename).suffix.lower()
+        if ext in ALLOWED_EXTENSIONS:
+            return ALLOWED_EXTENSIONS[ext]
 
+        # 3) Tentar pelo mimetype deduzido a partir do nome
+        mime_type, _ = mimetypes.guess_type(file.filename)
+        if mime_type in ALLOWED_MIME_TYPES:
+            return ALLOWED_MIME_TYPES[mime_type]
+
+    # Se nada resultar, rejeitar
     raise HTTPException(
         status.HTTP_400_BAD_REQUEST,
         "Formato de imagem não suportado. Usa JPG, PNG ou WEBP.",
@@ -85,7 +98,10 @@ def delete_avatar_file(stored_path: Optional[str]) -> None:
         pass
 
 
-def build_avatar_url(stored_path: Optional[str], request: Optional[Request]) -> Optional[str]:
+def build_avatar_url(
+    stored_path: Optional[str],
+    request: Optional[Request],
+) -> Optional[str]:
     if not stored_path:
         return None
 

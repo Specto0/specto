@@ -9,6 +9,9 @@ load_dotenv(ENV_PATH)
 class Settings:
     def __init__(self) -> None:
         # Lê a variável RAILWAY_DATABASE_URL do .env
+        # Prefer `DATABASE_URL` (used commonly) but fall back to `RAILWAY_DATABASE_URL`.
+        # Keep None if neither are set so caller can decide. For local development
+        # you can set `DATABASE_URL=sqlite+aiosqlite:///./specto.db` in `.env`.
         self.database_url: str | None = os.getenv("DATABASE_URL")
         self.secret_key: str = os.getenv("SECRET_KEY", "ChurrascoMorterini")
         self.access_token_expire_minutes: int = int(

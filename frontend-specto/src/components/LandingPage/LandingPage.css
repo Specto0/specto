@@ -9,6 +9,14 @@
   color: white;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
+
+}
+
+/* Reset margins/padding so header can sit flush to screen edges */
+html, body {  
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -24,9 +32,10 @@
 }
 
 .landing-nav {
+
   max-width: none;
-  margin: 0 auto;
-  padding: 1rem 2rem;
+  margin: 1;
+  padding: 1rem 2rem; 
   display: flex;
   justify-content: space-between;
   align-items: center;
