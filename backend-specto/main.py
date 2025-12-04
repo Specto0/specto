@@ -14,20 +14,12 @@ from app.utils.avatars import STATIC_ROOT
 
 app = FastAPI(title="Specto API")
 
-# ----------------- Routers da app -----------------
-app.include_router(filmes.router, prefix="/filmes", tags=["Filmes"])
-app.include_router(series.router, prefix="/series", tags=["Séries"])
-app.include_router(auth.router)         # rotas /auth/*
-app.include_router(vistos.router)       # CRUD Vistos
-app.include_router(comentarios.router)  # Comentários
-
 # ----------------- CORS -----------------
-# Para já deixamos aberto para todas as origens, sem credenciais,
-# o que é compatível com JWT em headers e evita chatices de CORS.
+# Aberto para todas as origens (sem credenciais), compatível com JWT em headers.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # se quiseres, depois podemos limitar só aos domínios da Vercel
-    allow_credentials=False,   # tem de ser False quando usamos ["*"]
+    allow_origins=["*"],        # se quiseres, depois limitamos aos domínios da Vercel
+    allow_credentials=False,    # TEM de ser False quando allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -35,27 +27,39 @@ app.add_middleware(
 # ----------------- Static files (avatars) -----------------
 app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
 
-# ----------------- Rotas auxiliares (TMDb) -----------------
-@app.get("/")
+# ----------------- Routers da app -----------------
+app.include_router(filmes.router, prefix="/filmes", tags=["Filmes"])
+app.include_router(series.router, prefix="/series", tags=["Séries"])
+app.include_router(auth.router)         # rotas /auth/*
+app.include_router(vistos.router)       # CRUD Vistos
+app.include_router(comentarios.router)  # Comentários
+
+
+# ----------------- Health check / root -----------------
+@app.get("/", tags=["Health"])
 def root():
+    """
+    Endpoint simples para health check (usado pelo Railway e para testes rápidos).
+    """
     return {"message": "FastAPI with TMDb connected!"}
 
 
-@app.get("/filmes-populares")
+# ----------------- Rotas auxiliares (TMDb) -----------------
+@app.get("/filmes-populares", tags=["Filmes"], name="filmes_populares_public")
 def filmes_populares():
     url = f"{BASE_URL}/movie/popular?api_key={API_KEY}&language=pt-BR&page=1"
     response = httpx.get(url)
     return response.json()
 
 
-@app.get("/series-populares")
+@app.get("/series-populares", tags=["Séries"], name="series_populares_public")
 def series_populares():
     url = f"{BASE_URL}/tv/popular?api_key={API_KEY}&language=pt-BR&page=1"
     response = httpx.get(url)
     return response.json()
 
 
-@app.get("/pesquisa")
+@app.get("/pesquisa", tags=["Pesquisa"])
 def pesquisa(query: str):
     query = query.strip()
 
@@ -74,7 +78,7 @@ def pesquisa(query: str):
     }
 
 
-@app.get("/filme/{id}")
+@app.get("/filme/{id}", tags=["Filmes"])
 def filme_detalhes(id: int):
     url = f"{BASE_URL}/movie/{id}?api_key={API_KEY}&language=pt-BR"
     f = httpx.get(url).json()
@@ -99,7 +103,7 @@ def filme_detalhes(id: int):
 
 
 # ----------------- Endpoint protegido -----------------
-@app.get("/me", response_model=UserRead)
+@app.get("/me", response_model=UserRead, tags=["Auth"])
 async def me(request: Request, user=Depends(auth.get_current_user)):
     return auth.user_to_read(user, request)
 
