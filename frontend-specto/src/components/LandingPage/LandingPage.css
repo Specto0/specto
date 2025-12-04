@@ -29,10 +29,9 @@ html, body {
 
 .landing-nav {
   /* make the nav span the full viewport width so children can reach the edges */
-  width: 100%;
   max-width: none;
-  margin: 0;
-  padding: 0; /* remove inner spacing so items can touch the edges */
+  margin: 1;
+  padding: 1rem 2rem; /* remove inner spacing so items can touch the edges */
   display: flex;
   justify-content: space-between;
   align-items: center;
