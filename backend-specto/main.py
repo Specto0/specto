@@ -14,12 +14,19 @@ from app.utils.avatars import STATIC_ROOT
 
 app = FastAPI(title="Specto API")
 
+# --------- ORIGENS AUTORIZADAS (Vercel + local) ----------
+origins = [
+    "https://specto-jet.vercel.app",  # domínio de produção da Vercel
+    "https://specto-git-main-danielsilvas-projects-77f71c9c.vercel.app",  # preview
+    "http://localhost:5173",  # desenvolvimento local
+]
+
 # ----------------- CORS -----------------
-# Aberto para todas as origens (sem credenciais), compatível com JWT em headers.
+# Agora permitido com credenciais (cookies) para estas origens.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # mais tarde podemos limitar aos domínios da Vercel
-    allow_credentials=False,    # TEM de ser False quando allow_origins=["*"]
+    allow_origins=origins,     # SEM "*"
+    allow_credentials=True,    # precisa ser True para login com cookies
     allow_methods=["*"],
     allow_headers=["*"],
 )
