@@ -18,7 +18,7 @@ app = FastAPI(title="Specto API")
 # Aberto para todas as origens (sem credenciais), compatível com JWT em headers.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # se quiseres, depois limitamos aos domínios da Vercel
+    allow_origins=["*"],        # mais tarde podemos limitar aos domínios da Vercel
     allow_credentials=False,    # TEM de ser False quando allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,9 +38,7 @@ app.include_router(comentarios.router)  # Comentários
 # ----------------- Health check / root -----------------
 @app.get("/", tags=["Health"])
 def root():
-    """
-    Endpoint simples para health check (usado pelo Railway e para testes rápidos).
-    """
+    """Endpoint simples para health check (Railway + teste rápido)."""
     return {"message": "FastAPI with TMDb connected!"}
 
 
