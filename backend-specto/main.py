@@ -23,14 +23,10 @@ app.include_router(comentarios.router)
 
 # CORS (abre para todos enquanto desenvolves)
 allowed_origins = {
-    "*"
-    
-    #"http://localhost:3000",
-    #"http://localhost:5173",
-    #"http://localhost:5174",
-    #"http://127.0.0.1:3000",
-    #"http://127.0.0.1:5173",
-    #"http://127.0.0.1:5174",
+    "https://specto-eosin.vercel.app",  # domínio de produção
+    "https://specto-p98cq76tn-danielsilvas-projects-77f71c9c.vercel.app",  # este deploy que aparece agora
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 }
 
 app.add_middleware(
