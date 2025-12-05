@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from datetime import date, datetime
 from typing import Optional
 
@@ -34,7 +33,9 @@ def _parse_date(data_str: Optional[str]) -> Optional[date]:
 
 
 async def _get_or_create_filme(session: AsyncSession, payload: VistoCreate) -> Filme:
-    filme = await session.scalar(select(Filme).where(Filme.tmdb_id == payload.tmdb_id))
+    filme = await session.scalar(
+        select(Filme).where(Filme.tmdb_id == payload.tmdb_id)
+    )
     ano = _parse_year(payload.data_lancamento)
 
     if not filme:
@@ -73,7 +74,9 @@ async def _get_or_create_filme(session: AsyncSession, payload: VistoCreate) -> F
 
 
 async def _get_or_create_serie(session: AsyncSession, payload: VistoCreate) -> Serie:
-    serie = await session.scalar(select(Serie).where(Serie.tmdb_id == payload.tmdb_id))
+    serie = await session.scalar(
+        select(Serie).where(Serie.tmdb_id == payload.tmdb_id)
+    )
     primeira_exibicao = _parse_date(payload.data_lancamento)
 
     if not serie:
@@ -124,7 +127,9 @@ def _map_visto(visto: Visto, filme: Optional[Filme], serie: Optional[Serie]) -> 
             backdrop_path=filme.backdrop_path,
             favorito=visto.favorito,
             data_visto=visto.data_visto,
-            media_avaliacao=float(filme.media_avaliacao) if filme.media_avaliacao is not None else None,
+            media_avaliacao=float(filme.media_avaliacao)
+            if filme.media_avaliacao is not None
+            else None,
             votos=filme.votos,
         )
 
@@ -140,11 +145,12 @@ def _map_visto(visto: Visto, filme: Optional[Filme], serie: Optional[Serie]) -> 
             backdrop_path=serie.backdrop_path,
             favorito=visto.favorito,
             data_visto=visto.data_visto,
-            media_avaliacao=float(serie.media_avaliacao) if serie.media_avaliacao is not None else None,
+            media_avaliacao=float(serie.media_avaliacao)
+            if serie.media_avaliacao is not None
+            else None,
             votos=serie.votos,
         )
 
-    # Não deveria acontecer, mas evita crash
     return VistoItem(
         id=visto.id,
         tipo="filme",
@@ -169,6 +175,7 @@ async def listar_vistos(
     )
 
     result = await session.execute(stmt)
+
     filmes: list[VistoItem] = []
     series: list[VistoItem] = []
 
@@ -182,15 +189,6 @@ async def listar_vistos(
     return VistoList(filmes=filmes, series=series)
 
 
-# 👇 NOVA rota alias para aceitar /vistos (sem slash) no GET
-@router.get("", response_model=VistoList, include_in_schema=False)
-async def listar_vistos_sem_slash(
-    session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
-) -> VistoList:
-    return await listar_vistos(session=session, user=user)
-
-
 @router.post("/", response_model=VistoItem, status_code=status.HTTP_201_CREATED)
 async def criar_visto(
     payload: VistoCreate,
@@ -199,14 +197,19 @@ async def criar_visto(
 ) -> VistoItem:
     if payload.tipo == "filme":
         alvo = await _get_or_create_filme(session, payload)
-        stmt = select(Visto).where(Visto.user_id == user.id, Visto.filme_id == alvo.id)
+        stmt = select(Visto).where(
+            Visto.user_id == user.id, Visto.filme_id == alvo.id
+        )
     else:
         alvo = await _get_or_create_serie(session, payload)
-        stmt = select(Visto).where(Visto.user_id == user.id, Visto.serie_id == alvo.id)
+        stmt = select(Visto).where(
+            Visto.user_id == user.id, Visto.serie_id == alvo.id
+        )
 
     existente = await session.scalar(stmt)
-
-    favorito_flag = bool(payload.favorito) if payload.favorito is not None else False
+    favorito_flag = (
+        bool(payload.favorito) if payload.favorito is not None else False
+    )
 
     if existente:
         if payload.favorito is not None:
@@ -232,16 +235,6 @@ async def criar_visto(
     )
 
 
-# 👇 NOVA rota alias para aceitar /vistos (sem slash) no POST
-@router.post("", response_model=VistoItem, status_code=status.HTTP_201_CREATED, include_in_schema=False)
-async def criar_visto_sem_slash(
-    payload: VistoCreate,
-    session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
-) -> VistoItem:
-    return await criar_visto(payload=payload, session=session, user=user)
-
-
 @router.patch("/{visto_id}", response_model=VistoItem)
 async def atualizar_visto(
     visto_id: int,
@@ -250,8 +243,12 @@ async def atualizar_visto(
     user: User = Depends(get_current_user),
 ) -> VistoItem:
     visto = await session.get(Visto, visto_id)
+
     if not visto or visto.user_id != user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Visto não encontrado.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Visto não encontrado.",
+        )
 
     if payload.favorito is not None:
         visto.favorito = payload.favorito
@@ -272,8 +269,12 @@ async def remover_visto(
     user: User = Depends(get_current_user),
 ) -> Response:
     visto = await session.get(Visto, visto_id)
+
     if not visto or visto.user_id != user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Visto não encontrado.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Visto não encontrado.",
+        )
 
     await session.delete(visto)
     await session.commit()
