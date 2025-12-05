@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./RandomMovieGame.css";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 
 type RandomMovieGameProps = {
   isOpen: boolean;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { resolveAvatarUrl } from "../../utils/avatar";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 
 type ComentarioApiUser = {
   id: number;

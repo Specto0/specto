@@ -6,7 +6,7 @@ import "../Home/Home.css";
 import "../Perfil/Perfil.css";
 import "./Series.css";
 import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 
 type SerieAPI = {
   id: number;

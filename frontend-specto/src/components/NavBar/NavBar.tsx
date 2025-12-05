@@ -4,7 +4,7 @@ import "./NavBar.css";
 import "../Home/Home.css";
 import { applyTheme, coerceTheme, type ThemeMode } from "../../utils/theme";
 import { resolveAvatarUrl } from "../../utils/avatar";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 import RandomMovieGame from "./RandomMovieGame";
 
 type NavBarProps = {

@@ -1,7 +1,7 @@
 import "./Registar.css";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 
 interface SignUpFormData {
   username: string;

@@ -2,7 +2,7 @@ import "./Login.css";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { applyTheme, coerceTheme } from "../../utils/theme";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 
 interface LogInFormData {
   email: string;

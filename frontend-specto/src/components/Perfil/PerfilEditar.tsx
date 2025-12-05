@@ -12,7 +12,7 @@ import {
   type ThemeMode,
 } from "../../utils/theme";
 import { resolveAvatarUrl } from "../../utils/avatar";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 
 type UserInfo = {
   id: number;
