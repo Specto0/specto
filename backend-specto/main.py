@@ -15,19 +15,16 @@ from app.utils.avatars import STATIC_ROOT
 app = FastAPI(title="Specto API")
 
 # --------- ORIGENS AUTORIZADAS (Vercel + local) ----------
-# Produção + dev local. O regex em baixo cobre os domínios de preview da Vercel.
-ALLOWED_ORIGINS = [
-    "https://specto-jet.vercel.app",  # domínio de produção da Vercel
-    "http://localhost:5173",          # desenvolvimento local
+origins = [
+    "https://specto-jet.vercel.app",
+    "https://specto-git-main-danielsilvas-projects-77f71c9c.vercel.app",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    # Origens explícitas (produção + localhost)
-    allow_origins=ALLOWED_ORIGINS,
-    # Qualquer domínio do tipo https://specto-*****.vercel.app (previews)
-    allow_origin_regex=r"https://specto-.*\.vercel\.app",
-    allow_credentials=True,    # necessário para cookies de auth
+    allow_origins=origins,
+    allow_credentials=False,  # JWT em headers (sem cookies cross-site)
     allow_methods=["*"],
     allow_headers=["*"],
 )
