@@ -15,18 +15,19 @@ from app.utils.avatars import STATIC_ROOT
 app = FastAPI(title="Specto API")
 
 # --------- ORIGENS AUTORIZADAS (Vercel + local) ----------
-origins = [
+# Produção + dev local. O regex em baixo cobre os domínios de preview da Vercel.
+ALLOWED_ORIGINS = [
     "https://specto-jet.vercel.app",  # domínio de produção da Vercel
-    "https://specto-git-main-danielsilvas-projects-77f71c9c.vercel.app",  # preview
-    "http://localhost:5173",  # desenvolvimento local
+    "http://localhost:5173",          # desenvolvimento local
 ]
 
-# ----------------- CORS -----------------
-# Agora permitido com credenciais (cookies) para estas origens.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,     # SEM "*"
-    allow_credentials=True,    # precisa ser True para login com cookies
+    # Origens explícitas (produção + localhost)
+    allow_origins=ALLOWED_ORIGINS,
+    # Qualquer domínio do tipo https://specto-*****.vercel.app (previews)
+    allow_origin_regex=r"https://specto-.*\.vercel\.app",
+    allow_credentials=True,    # necessário para cookies de auth
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -35,6 +36,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
 
 # ----------------- Routers da app -----------------
+# (mantemos sem prefix aqui, pois cada router já tem o seu próprio prefix)
 app.include_router(filmes.router, prefix="/filmes", tags=["Filmes"])
 app.include_router(series.router, prefix="/series", tags=["Séries"])
 app.include_router(auth.router)         # rotas /auth/*
