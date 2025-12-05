@@ -1,12 +1,20 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    UploadFile,
+    File,
+    status,
+    Response,       # 👈 ADICIONADO
+)
 from fastapi.security import OAuth2PasswordBearer, HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError
 from fastapi.security import OAuth2PasswordRequestForm
-
 
 from app.core.db import get_session
 from app.core.security import hash_password, verify_password, create_access_token, decode_token
@@ -35,9 +43,14 @@ async def register(
     session: AsyncSession = Depends(get_session),
 ):
     # duplicados por username OU email
-    res = await session.execute(select(User).where(or_(User.username == payload.username, User.email == payload.email)))
+    res = await session.execute(
+        select(User).where(
+            or_(User.username == payload.username, User.email == payload.email)
+        )
+    )
     if res.scalar_one_or_none():
         raise HTTPException(400, "Username ou email já existe.")
+
     user = User(
         username=payload.username,
         email=payload.email,
@@ -48,10 +61,12 @@ async def register(
     await session.refresh(user)
     return user_to_read(user, request)
 
+
 # ===== LOGIN =====
 @router.post("/login", response_model=AuthResponse)
 async def login(
     request: Request,
+    response: Response,   # 👈 ADICIONADO: para podermos definir cookies
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
@@ -70,18 +85,36 @@ async def login(
         extra_claims={"username": user.username},
     )
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": user_to_read(user, request),
-    }
+    # 👇 continua a devolver EXACTAMENTE o mesmo JSON de antes
+    #    (para o frontend guardar o token onde quiser)
+    auth_payload: AuthResponse = AuthResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=user_to_read(user, request),
+    )
+
+    # 👇 EXTRA: mete também o token num cookie, caso queiras usar cookies no futuro
+    #    (só vai ser enviado se o frontend usar credentials: "include")
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,      # mantém True: Railway está em HTTPS
+        samesite="none",  # obrigatório para funcionar entre domínios diferentes (Vercel ↔ Railway)
+    )
+
+    return auth_payload
 
 
 # Dependência para endpoints protegidos
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 bearer_scheme = HTTPBearer(auto_error=False)
 
-async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)) -> User:
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    session: AsyncSession = Depends(get_session),
+) -> User:
     try:
         payload = decode_token(token)
         user_id = int(payload.get("sub", "0"))
@@ -100,14 +133,17 @@ async def get_current_user_optional(
 ) -> Optional[User]:
     if credentials is None:
         return None
+
     token = credentials.credentials
     try:
         payload = decode_token(token)
         user_id = int(payload.get("sub", "0"))
     except (JWTError, ValueError):
         return None
+
     res = await session.execute(select(User).where(User.id == user_id))
     return res.scalar_one_or_none()
+
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(_: User = Depends(get_current_user)) -> None:
