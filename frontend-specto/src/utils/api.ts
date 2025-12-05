@@ -1,42 +1,39 @@
 const stripTrailingSlash = (value: string): string =>
   value.replace(/\/+$/, "");
 
-const resolveEnvBaseUrl = (): string | null => {
-  const candidates = [
-    import.meta.env.VITE_API_BASE_URL as string | undefined,
-    import.meta.env.VITE_API_URL as string | undefined,
-  ];
+const LOCAL_FALLBACK = "http://127.0.0.1:8000";
 
-  for (const candidate of candidates) {
-    if (candidate && typeof candidate === "string") {
-      const trimmed = candidate.trim();
-      if (trimmed) {
-        return stripTrailingSlash(trimmed);
-      }
-    }
+const resolveBaseUrl = (): string => {
+  const envValue = typeof import.meta.env.VITE_API_BASE_URL === "string"
+    ? import.meta.env.VITE_API_BASE_URL.trim()
+    : "";
+
+  if (envValue) {
+    return stripTrailingSlash(envValue);
   }
 
-  return null;
-};
-
-const resolveBrowserBaseUrl = (): string | null => {
-  if (typeof window === "undefined") return null;
-  const { protocol, hostname } = window.location;
-
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return `${protocol}//${hostname}:8000`;
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")
+  ) {
+    return LOCAL_FALLBACK;
   }
 
-  return stripTrailingSlash(window.location.origin);
+  if (import.meta.env.PROD) {
+    console.error(
+      "API_BASE_URL indefinido em produção. Define VITE_API_BASE_URL no ambiente.",
+    );
+  }
+
+  return LOCAL_FALLBACK;
 };
 
-export const API_BASE_URL =
-  resolveEnvBaseUrl() ??
-  resolveBrowserBaseUrl() ??
-  "http://127.0.0.1:8000";
+export const API_BASE_URL = resolveBaseUrl();
 
 export const buildApiUrl = (path: string): string => {
   if (!path) return API_BASE_URL;
+
   const formattedPath = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE_URL}${formattedPath}`;
 };
@@ -46,3 +43,6 @@ export const buildWsUrl = (path: string): string => {
   const formattedPath = path.startsWith("/") ? path : `/${path}`;
   return `${base}${formattedPath}`;
 };
+
+console.log("🔧 API_BASE_URL =>", API_BASE_URL);
+console.log("🔧 login URL =>", buildApiUrl("/auth/login"));

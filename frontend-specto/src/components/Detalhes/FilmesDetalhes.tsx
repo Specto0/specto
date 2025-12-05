@@ -6,7 +6,7 @@ import NavBar from "../NavBar/NavBar";
 import Skeleton from "../Skeleton/Skeleton";
 import ComentariosSection from "./ComentariosSection";
 import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 
 type ElencoType = {
   nome: string;

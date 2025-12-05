@@ -16,7 +16,7 @@ from app.utils.avatars import STATIC_ROOT
 app = FastAPI(title="Specto API")
 
 # ----------------- CORS -----------------
-# Aberto para as origens do front (localhost e produção).
+# Aberto para as origens do front (localhost, preview e produção Vercel).
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -24,11 +24,14 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:4173",
     "https://localhost:5173",
     "https://127.0.0.1:5173",
+    "https://specto-jet.vercel.app",
+    "https://specto-git-main-danielsilvas-projects-77f71c9c.vercel.app",
 ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=False,
+    allow_credentials=False,  # JWT em headers (sem cookies cross-site)
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -37,6 +40,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
 
 # ----------------- Routers da app -----------------
+# (mantemos sem prefix aqui, pois cada router já tem o seu próprio prefix)
 app.include_router(filmes.router, prefix="/filmes", tags=["Filmes"])
 app.include_router(series.router, prefix="/series", tags=["Séries"])
 app.include_router(auth.router)         # rotas /auth/*
@@ -49,9 +53,7 @@ app.include_router(users.router)        # Perfil público
 # ----------------- Health check / root -----------------
 @app.get("/", tags=["Health"])
 def root():
-    """
-    Endpoint simples para health check (usado pelo Railway e para testes rápidos).
-    """
+    """Endpoint simples para health check (Railway + teste rápido)."""
     return {"message": "FastAPI with TMDb connected!"}
 
 

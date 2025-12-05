@@ -7,7 +7,7 @@ import TrailerModal from "../TrailerModal/TrailerModal";
 import "../NavBar/NavBar.css";
 import "../Perfil/Perfil.css";
 import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl } from "@/utils/api";
 
 export type ItemMedia = {
   id: number;
