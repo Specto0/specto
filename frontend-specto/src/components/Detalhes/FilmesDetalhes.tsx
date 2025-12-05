@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./Detalhes.css";
 import "../Home/Home.css";
 import NavBar from "../NavBar/NavBar";
-import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
+import Skeleton from "../Skeleton/Skeleton";
 import ComentariosSection from "./ComentariosSection";
 import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
 import { buildApiUrl } from "../../utils/api";
@@ -138,21 +138,21 @@ export default function FilmesDetalhes() {
   }, [id]);
 
   useEffect(() => {
-  if (!id) return;
+    if (!id) return;
 
-  const fetchOndeAssistir = async () => {
-    try {
-      const res = await fetch(buildApiUrl(`/filmes/${id}/onde-assistir?pais=PT`));
-      if (!res.ok) throw new Error("Erro ao buscar onde assistir");
-      const data = await res.json();
-      setOndeAssistir(data);
-    } catch (err) {
-      console.error("Erro ao carregar onde assistir:", err);
-    }
-  };
+    const fetchOndeAssistir = async () => {
+      try {
+        const res = await fetch(buildApiUrl(`/filmes/${id}/onde-assistir?pais=PT`));
+        if (!res.ok) throw new Error("Erro ao buscar onde assistir");
+        const data = await res.json();
+        setOndeAssistir(data);
+      } catch (err) {
+        console.error("Erro ao carregar onde assistir:", err);
+      }
+    };
 
-  fetchOndeAssistir();
-}, [id]);
+    fetchOndeAssistir();
+  }, [id]);
 
 
 
@@ -262,8 +262,8 @@ export default function FilmesDetalhes() {
         respostaFavorito
           ? "Está nos teus favoritos e vistos!"
           : jaEstavaAdicionado
-          ? "Os teus vistos foram atualizados."
-          : "Adicionado aos teus vistos!";
+            ? "Os teus vistos foram atualizados."
+            : "Adicionado aos teus vistos!";
       openModal(successMessage);
     } catch (err) {
       console.error("Erro ao adicionar aos vistos:", err);
@@ -355,30 +355,6 @@ export default function FilmesDetalhes() {
     setActiveTrailerIndex(index);
   };
 
-  const metaItems = [
-    filme?.data_lancamento
-      ? { label: "Estreia", value: filme.data_lancamento }
-      : null,
-    typeof filme?.nota === "number"
-      ? { label: "Nota", value: `${filme.nota.toFixed(1)} ⭐` }
-      : null,
-    filme?.adult !== undefined
-      ? { label: "Classificação", value: filme.adult ? "Adulto" : "Livre" }
-      : null,
-    filme?.generos?.length
-      ? { label: "Géneros", value: filme.generos.join(", ") }
-      : null,
-    filme?.duracao
-      ? { label: "Duração", value: `${filme.duracao} min` }
-      : null,
-    typeof filme?.orcamento === "number" && filme.orcamento > 0
-      ? { label: "Orçamento", value: `$${filme.orcamento.toLocaleString()}` }
-      : null,
-    typeof filme?.receita === "number" && filme.receita > 0
-      ? { label: "Receita", value: `$${filme.receita.toLocaleString()}` }
-      : null,
-  ].filter(Boolean) as Array<{ label: string; value: string }>;
-
   const activeTrailer = trailers.length
     ? trailers[Math.min(activeTrailerIndex, trailers.length - 1)]
     : null;
@@ -386,14 +362,35 @@ export default function FilmesDetalhes() {
   const addButtonLabel = wasAdded
     ? "Já nos teus vistos"
     : isSavingVisto
-    ? "A guardar..."
-    : "Adicionar aos vistos";
+      ? "A guardar..."
+      : "Adicionar aos vistos";
 
-  const removeButtonLabel = isSavingVisto
-    ? "A remover..."
-    : "Remover dos vistos";
+  if (!filme) {
+    return (
+      <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
+        <NavBar toggleDarkMode={themeMode === "dark"} />
+        <div className="detalhes-container">
+          {/* Hero Skeleton */}
+          <Skeleton height="420px" borderRadius="28px" />
 
-  if (!filme) return <LoadingSpinner color="#3b82f6" size="large" />;
+          {/* Content Skeleton */}
+          <div style={{ padding: "0 20px" }}>
+            <Skeleton width="60%" height="40px" style={{ marginBottom: "20px" }} />
+            <Skeleton width="100%" height="20px" style={{ marginBottom: "10px" }} />
+            <Skeleton width="100%" height="20px" style={{ marginBottom: "10px" }} />
+            <Skeleton width="80%" height="20px" style={{ marginBottom: "30px" }} />
+
+            {/* Meta Skeleton */}
+            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+              {[1, 2, 3, 4].map(i => (
+                <Skeleton key={i} width="120px" height="60px" borderRadius="18px" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
@@ -425,13 +422,16 @@ export default function FilmesDetalhes() {
       <div className="detalhes-container">
         <section className="detalhes-hero">
           {filme.backdrop && (
-            <img
-              className="detalhes-hero-bg"
-              src={filme.backdrop}
-              alt={filme.titulo}
-            />
+            <div className="detalhes-hero-bg-wrapper">
+              <img
+                className="detalhes-hero-bg"
+                src={filme.backdrop}
+                alt={filme.titulo}
+              />
+              <div className="detalhes-hero-gradient" />
+            </div>
           )}
-          <div className="detalhes-hero-gradient" />
+
           <div className="detalhes-hero-content">
             {filme.poster && (
               <img
@@ -443,20 +443,42 @@ export default function FilmesDetalhes() {
 
             <div className="detalhes-hero-main">
               <h1 className="detalhes-title">{filme.titulo}</h1>
+
+              <div className="detalhes-info-line">
+                {filme.data_lancamento && (
+                  <span>{filme.data_lancamento.split("-")[0]}</span>
+                )}
+                {filme.duracao && (
+                  <>
+                    <span className="detalhes-separator">•</span>
+                    <span>{Math.floor(filme.duracao / 60)}h {filme.duracao % 60}m</span>
+                  </>
+                )}
+                {typeof filme.nota === "number" && (
+                  <>
+                    <span className="detalhes-separator">•</span>
+                    <span className="detalhes-rating">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="none" style={{ marginRight: "4px", marginBottom: "2px" }}>
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                      {filme.nota.toFixed(1)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {filme.generos && filme.generos.length > 0 && (
+                <div className="detalhes-genres">
+                  {filme.generos.map((g) => (
+                    <span key={g} className="detalhes-genre-pill">{g}</span>
+                  ))}
+                </div>
+              )}
+
               {filme.sinopse && (
                 <p className="detalhes-sinopse">{filme.sinopse}</p>
               )}
 
-              {metaItems.length > 0 && (
-                <div className="detalhes-meta">
-                  {metaItems.map((item) => (
-                    <div className="detalhes-meta-item" key={item.label}>
-                      <span className="detalhes-meta-label">{item.label}</span>
-                      <span className="detalhes-meta-value">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
               {isAuthenticated ? (
                 <div className="detalhes-actions">
                   <button
@@ -465,7 +487,21 @@ export default function FilmesDetalhes() {
                     disabled={isSavingVisto || wasAdded}
                     type="button"
                   >
-                    {addButtonLabel}
+                    {wasAdded ? (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        {addButtonLabel}
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        {addButtonLabel}
+                      </>
+                    )}
                   </button>
                   {wasAdded && (
                     <button
@@ -473,15 +509,18 @@ export default function FilmesDetalhes() {
                       onClick={handleRemoverDosVistos}
                       disabled={isSavingVisto}
                       type="button"
+                      title="Remover dos vistos"
                     >
-                      {removeButtonLabel}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
                     </button>
                   )}
                   {feedback && (
                     <span
-                      className={`detalhes-feedback ${
-                        feedback.type === "success" ? "sucesso" : "erro"
-                      }`}
+                      className={`detalhes-feedback ${feedback.type === "success" ? "sucesso" : "erro"
+                        }`}
                     >
                       {feedback.message}
                     </span>
@@ -498,69 +537,69 @@ export default function FilmesDetalhes() {
           </div>
         </section>
 
-{ondeAssistir && (
-  <section className="detalhes-section onde-assistir-section">
-    <div className="detalhes-section-header">
-      <h2>Onde Assistir</h2>
-    </div>
-
-    {ondeAssistir.flatrate?.length > 0 && (
-      <>
-        <div className="titulo-onde-assistir">
-          <h3>Streaming</h3>
-        </div>
-        <div className="providers-grid">
-          {ondeAssistir.flatrate.map((prov: any) => (
-            <div key={prov.provider_name} className="provider-card">
-              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
-              <p>{prov.provider_name}</p>
+        {ondeAssistir && (
+          <section className="detalhes-section onde-assistir-section">
+            <div className="detalhes-section-header">
+              <h2>Onde Assistir</h2>
             </div>
-          ))}
-        </div>
-      </>
-    )}
 
-    {ondeAssistir.rent?.length > 0 && (
-      <>
-        <div className="titulo-onde-assistir">
-          <h3>Alugar</h3>
-        </div>
-        <div className="providers-grid">
-          {ondeAssistir.rent.map((prov: any) => (
-            <div key={prov.provider_name} className="provider-card">
-              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
-              <p>{prov.provider_name}</p>
-            </div>
-          ))}
-        </div>
-      </>
-    )}
+            {ondeAssistir.flatrate?.length > 0 && (
+              <>
+                <div className="titulo-onde-assistir">
+                  <h3>Streaming</h3>
+                </div>
+                <div className="providers-grid">
+                  {ondeAssistir.flatrate.map((prov: any) => (
+                    <div key={prov.provider_name} className="provider-card">
+                      <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+                      <p>{prov.provider_name}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
-    {ondeAssistir.buy?.length > 0 && (
-      <>
-        <div className="titulo-onde-assistir">
-          <h3>Comprar</h3>
-        </div>
-        <div className="providers-grid">
-          {ondeAssistir.buy.map((prov: any) => (
-            <div key={prov.provider_name} className="provider-card">
-              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
-              <p>{prov.provider_name}</p>
-            </div>
-          ))}
-        </div>
-      </>
-    )}
-    
-    {(!ondeAssistir.flatrate?.length &&
-      !ondeAssistir.rent?.length &&
-      !ondeAssistir.buy?.length) && (
-      <p className="detalhes-sem-plataformas">
-        Não está disponível em nenhuma plataforma de streaming em Portugal.
-      </p>
-    )}
-  </section>
-)}
+            {ondeAssistir.rent?.length > 0 && (
+              <>
+                <div className="titulo-onde-assistir">
+                  <h3>Alugar</h3>
+                </div>
+                <div className="providers-grid">
+                  {ondeAssistir.rent.map((prov: any) => (
+                    <div key={prov.provider_name} className="provider-card">
+                      <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+                      <p>{prov.provider_name}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {ondeAssistir.buy?.length > 0 && (
+              <>
+                <div className="titulo-onde-assistir">
+                  <h3>Comprar</h3>
+                </div>
+                <div className="providers-grid">
+                  {ondeAssistir.buy.map((prov: any) => (
+                    <div key={prov.provider_name} className="provider-card">
+                      <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+                      <p>{prov.provider_name}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {(!ondeAssistir.flatrate?.length &&
+              !ondeAssistir.rent?.length &&
+              !ondeAssistir.buy?.length) && (
+                <p className="detalhes-sem-plataformas">
+                  Não está disponível em nenhuma plataforma de streaming em Portugal.
+                </p>
+              )}
+          </section>
+        )}
 
 
         {activeTrailer && (
@@ -596,9 +635,8 @@ export default function FilmesDetalhes() {
                     <button
                       key={video.chave}
                       type="button"
-                      className={`detalhes-trailer-dot ${
-                        idx === activeTrailerIndex ? "ativo" : ""
-                      }`}
+                      className={`detalhes-trailer-dot ${idx === activeTrailerIndex ? "ativo" : ""
+                        }`}
                       onClick={() => handleSelectTrailer(idx)}
                       aria-label={`Ver trailer ${idx + 1}`}
                     />

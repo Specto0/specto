@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/Users/daniel/Desktop/ESTG/LP - Specto/specto/venv"
+VIRTUAL_ENV="/Users/davidmonteiro/Documents/DWDM/specto2/specto/venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

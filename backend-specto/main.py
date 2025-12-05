@@ -1,4 +1,4 @@
-import httpx  # para fazer requests HTTP
+
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -7,19 +7,28 @@ from config import API_KEY, BASE_URL
 from routes import filmes, series
 
 # Auth / Users
-from app.routers import auth, vistos, comentarios
+from app.routers import auth, vistos, comentarios, users
+from app.routers import forum as forum_router
 from app.schemas.user import UserRead
-from app.utils.http_cache import close_cache_client
+from app.utils.http_cache import close_cache_client, cached_get_json
 from app.utils.avatars import STATIC_ROOT
 
 app = FastAPI(title="Specto API")
 
 # ----------------- CORS -----------------
-# Aberto para todas as origens (sem credenciais), compatível com JWT em headers.
+# Aberto para as origens do front (localhost e produção).
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",  # preview Vite
+    "http://127.0.0.1:4173",
+    "https://localhost:5173",
+    "https://127.0.0.1:5173",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # se quiseres, depois limitamos aos domínios da Vercel
-    allow_credentials=False,    # TEM de ser False quando allow_origins=["*"]
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -33,6 +42,8 @@ app.include_router(series.router, prefix="/series", tags=["Séries"])
 app.include_router(auth.router)         # rotas /auth/*
 app.include_router(vistos.router)       # CRUD Vistos
 app.include_router(comentarios.router)  # Comentários
+app.include_router(forum_router.router) # Fórum e chat
+app.include_router(users.router)        # Perfil público
 
 
 # ----------------- Health check / root -----------------
@@ -46,30 +57,28 @@ def root():
 
 # ----------------- Rotas auxiliares (TMDb) -----------------
 @app.get("/filmes-populares", tags=["Filmes"], name="filmes_populares_public")
-def filmes_populares():
+async def filmes_populares():
     url = f"{BASE_URL}/movie/popular?api_key={API_KEY}&language=pt-BR&page=1"
-    response = httpx.get(url)
-    return response.json()
+    return await cached_get_json(url, ttl=3600)
 
 
 @app.get("/series-populares", tags=["Séries"], name="series_populares_public")
-def series_populares():
+async def series_populares():
     url = f"{BASE_URL}/tv/popular?api_key={API_KEY}&language=pt-BR&page=1"
-    response = httpx.get(url)
-    return response.json()
+    return await cached_get_json(url, ttl=3600)
 
 
 @app.get("/pesquisa", tags=["Pesquisa"])
-def pesquisa(query: str):
+async def pesquisa(query: str):
     query = query.strip()
 
     # Pesquisa filmes
     url_filmes = f"{BASE_URL}/search/movie?api_key={API_KEY}&language=pt-BR&query={query}"
-    filmes_res = httpx.get(url_filmes).json()
+    filmes_res = await cached_get_json(url_filmes, ttl=300)
 
     # Pesquisa séries
     url_series = f"{BASE_URL}/search/tv?api_key={API_KEY}&language=pt-BR&query={query}"
-    series_res = httpx.get(url_series).json()
+    series_res = await cached_get_json(url_series, ttl=300)
 
     # Retorna já no formato esperado pelo frontend
     return {
@@ -79,9 +88,9 @@ def pesquisa(query: str):
 
 
 @app.get("/filme/{id}", tags=["Filmes"])
-def filme_detalhes(id: int):
+async def filme_detalhes(id: int):
     url = f"{BASE_URL}/movie/{id}?api_key={API_KEY}&language=pt-BR"
-    f = httpx.get(url).json()
+    f = await cached_get_json(url, ttl=3600)
     return {
         "id": f["id"],
         "titulo": f.get("title"),

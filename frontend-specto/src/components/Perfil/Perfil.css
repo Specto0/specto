@@ -247,7 +247,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1; /* permite empurrar a data para o fundo */
+  flex: 1;
+  /* permite empurrar a data para o fundo */
 }
 
 /* (mantém-se caso algum h3 dentro do body ainda exista) */
@@ -263,11 +264,13 @@
   font-size: 1rem;
   line-height: 1.35;
   display: -webkit-box;
-  -webkit-line-clamp: 2;       /* até 2 linhas */
+  -webkit-line-clamp: 2;
+  /* até 2 linhas */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: calc(1.35em * 2); /* reserva espaço igual para todos */
+  min-height: calc(1.35em * 2);
+  /* reserva espaço igual para todos */
 }
 
 /* --- NOVO LAYOUT DE INFORMAÇÃO --- */
@@ -290,7 +293,8 @@
 
 /* Data em baixo, alinhada ao fundo do card */
 .perfil-card-info-bottom {
-  margin-top: auto; /* cola esta linha ao fundo do body */
+  margin-top: auto;
+  /* cola esta linha ao fundo do body */
   font-size: 0.85rem;
   opacity: 0.8;
   color: rgba(255, 255, 255, 0.65);
@@ -304,9 +308,11 @@
 .perfil-card-info-top .perfil-card-sep:first-of-type {
   display: none;
 }
-.perfil-card-info-top .perfil-card-rating + .perfil-card-sep {
+
+.perfil-card-info-top .perfil-card-rating+.perfil-card-sep {
   display: inline;
 }
+
 /* --- FIM NOVO LAYOUT --- */
 
 .perfil-card-meta {
@@ -349,6 +355,132 @@
 .perfil-empty.destaque {
   border: 1px dashed rgba(59, 130, 246, 0.5);
   margin-top: 16px;
+}
+
+.perfil-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.perfil-share-btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.perfil-share-btn-text:hover {
+  background: #f1f5f9;
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.home-container.dark .perfil-share-btn-text {
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.home-container.dark .perfil-share-btn-text:hover {
+  background: #1e293b;
+  color: #60a5fa;
+  border-color: #60a5fa;
+}
+
+.perfil-share-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.perfil-share-icon {
+  width: 20px;
+  height: 20px;
+  stroke: #64748b;
+  stroke-width: 2px;
+}
+
+.perfil-share-btn:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+}
+
+.perfil-share-btn:hover .perfil-share-icon {
+  stroke: #3b82f6;
+}
+
+.home-container.dark .perfil-share-icon {
+  stroke: #94a3b8;
+}
+
+.home-container.dark .perfil-share-btn:hover .perfil-share-icon {
+  stroke: #60a5fa;
+}
+
+.home-container.dark .perfil-share-btn {
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.home-container.dark .perfil-share-btn:hover {
+  background: #1e293b;
+  color: #60a5fa;
+  border-color: #60a5fa;
+}
+
+.perfil-share-toast {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-bottom: 0.5rem;
+  animation: fadeIn 0.2s ease-out;
+  pointer-events: none;
+}
+
+.perfil-share-toast::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .perfil-btn {

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./Detalhes.css";
 import "../Home/Home.css";
 import NavBar from "../NavBar/NavBar";
-import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
+import Skeleton from "../Skeleton/Skeleton";
 import ComentariosSection from "./ComentariosSection";
 import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
 import { buildApiUrl } from "../../utils/api";
@@ -135,7 +135,7 @@ export default function SeriesDetalhes() {
 
   useEffect(() => {
     if (!id) return;
-    
+
     const fetchOndeAssistir = async () => {
       try {
         const res = await fetch(buildApiUrl(`/series/${id}/onde-assistir?pais=PT`));
@@ -146,7 +146,7 @@ export default function SeriesDetalhes() {
         console.error("Erro ao carregar onde assistir:", err);
       }
     };
-  
+
     fetchOndeAssistir();
   }, [id]);
 
@@ -257,8 +257,8 @@ export default function SeriesDetalhes() {
         respostaFavorito
           ? "Está nos teus favoritos e vistos!"
           : jaEstavaAdicionado
-          ? "Os teus vistos foram atualizados."
-          : "Adicionada aos teus vistos!";
+            ? "Os teus vistos foram atualizados."
+            : "Adicionada aos teus vistos!";
       openModal(successMessage);
     } catch (err) {
       console.error("Erro ao adicionar série aos vistos:", err);
@@ -387,15 +387,39 @@ export default function SeriesDetalhes() {
   const addButtonLabel = wasAdded
     ? "Já nos teus vistos"
     : isSavingVisto
-    ? "A guardar..."
-    : "Adicionar aos vistos";
+      ? "A guardar..."
+      : "Adicionar aos vistos";
 
   const removeButtonLabel = isSavingVisto
     ? "A remover..."
     : "Remover dos vistos";
 
-  if (loading) return <LoadingSpinner color="#3b82f6" size="large" />;
-  if (!serie) return <p className="loading">Série não encontrada.</p>;
+  if (loading || !serie) {
+    return (
+      <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
+        <NavBar toggleDarkMode={themeMode === "dark"} />
+        <div className="detalhes-container">
+          {/* Hero Skeleton */}
+          <Skeleton height="420px" borderRadius="28px" />
+
+          {/* Content Skeleton */}
+          <div style={{ padding: "0 20px" }}>
+            <Skeleton width="60%" height="40px" style={{ marginBottom: "20px" }} />
+            <Skeleton width="100%" height="20px" style={{ marginBottom: "10px" }} />
+            <Skeleton width="100%" height="20px" style={{ marginBottom: "10px" }} />
+            <Skeleton width="80%" height="20px" style={{ marginBottom: "30px" }} />
+
+            {/* Meta Skeleton */}
+            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+              {[1, 2, 3, 4].map(i => (
+                <Skeleton key={i} width="120px" height="60px" borderRadius="18px" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
@@ -482,9 +506,8 @@ export default function SeriesDetalhes() {
                   )}
                   {feedback && (
                     <span
-                      className={`detalhes-feedback ${
-                        feedback.type === "success" ? "sucesso" : "erro"
-                      }`}
+                      className={`detalhes-feedback ${feedback.type === "success" ? "sucesso" : "erro"
+                        }`}
                     >
                       {feedback.message}
                     </span>
@@ -502,68 +525,68 @@ export default function SeriesDetalhes() {
         </section>
 
         {ondeAssistir && (
-  <section className="detalhes-section onde-assistir-section">
-    <div className="detalhes-section-header">
-      <h2>Onde Assistir</h2>
-    </div>
-
-    {ondeAssistir.flatrate?.length > 0 && (
-      <>
-        <div className="titulo-onde-assistir">
-          <h3>Streaming</h3>
-        </div>
-        <div className="providers-grid">
-          {ondeAssistir.flatrate.map((prov: any) => (
-            <div key={prov.provider_name} className="provider-card">
-              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
-              <p>{prov.provider_name}</p>
+          <section className="detalhes-section onde-assistir-section">
+            <div className="detalhes-section-header">
+              <h2>Onde Assistir</h2>
             </div>
-          ))}
-        </div>
-      </>
-    )}
 
-    {ondeAssistir.rent?.length > 0 && (
-      <>
-        <div className="titulo-onde-assistir">
-          <h3>Alugar</h3>
-        </div>
-        <div className="providers-grid">
-          {ondeAssistir.rent.map((prov: any) => (
-            <div key={prov.provider_name} className="provider-card">
-              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
-              <p>{prov.provider_name}</p>
-            </div>
-          ))}
-        </div>
-      </>
-    )}
+            {ondeAssistir.flatrate?.length > 0 && (
+              <>
+                <div className="titulo-onde-assistir">
+                  <h3>Streaming</h3>
+                </div>
+                <div className="providers-grid">
+                  {ondeAssistir.flatrate.map((prov: any) => (
+                    <div key={prov.provider_name} className="provider-card">
+                      <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+                      <p>{prov.provider_name}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
-    {ondeAssistir.buy?.length > 0 && (
-      <>
-        <div className="titulo-onde-assistir">
-          <h3>Comprar</h3>
-        </div>
-        <div className="providers-grid">
-          {ondeAssistir.buy.map((prov: any) => (
-            <div key={prov.provider_name} className="provider-card">
-              <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
-              <p>{prov.provider_name}</p>
-            </div>
-          ))}
-        </div>
-      </>
-    )}
+            {ondeAssistir.rent?.length > 0 && (
+              <>
+                <div className="titulo-onde-assistir">
+                  <h3>Alugar</h3>
+                </div>
+                <div className="providers-grid">
+                  {ondeAssistir.rent.map((prov: any) => (
+                    <div key={prov.provider_name} className="provider-card">
+                      <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+                      <p>{prov.provider_name}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
-    {(!ondeAssistir.flatrate?.length &&
-      !ondeAssistir.rent?.length &&
-      !ondeAssistir.buy?.length) && (
-      <p className="detalhes-sem-plataformas">
-        Não está disponível em nenhuma plataforma de streaming em Portugal.
-      </p>
-    )}
-  </section>
-)}
+            {ondeAssistir.buy?.length > 0 && (
+              <>
+                <div className="titulo-onde-assistir">
+                  <h3>Comprar</h3>
+                </div>
+                <div className="providers-grid">
+                  {ondeAssistir.buy.map((prov: any) => (
+                    <div key={prov.provider_name} className="provider-card">
+                      <img src={`https://image.tmdb.org/t/p/w200${prov.logo_path}`} />
+                      <p>{prov.provider_name}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {(!ondeAssistir.flatrate?.length &&
+              !ondeAssistir.rent?.length &&
+              !ondeAssistir.buy?.length) && (
+                <p className="detalhes-sem-plataformas">
+                  Não está disponível em nenhuma plataforma de streaming em Portugal.
+                </p>
+              )}
+          </section>
+        )}
 
 
 
@@ -600,9 +623,8 @@ export default function SeriesDetalhes() {
                     <button
                       key={video.chave}
                       type="button"
-                      className={`detalhes-trailer-dot ${
-                        idx === activeTrailerIndex ? "ativo" : ""
-                      }`}
+                      className={`detalhes-trailer-dot ${idx === activeTrailerIndex ? "ativo" : ""
+                        }`}
                       onClick={() => handleSelectTrailer(idx)}
                       aria-label={`Ver trailer ${idx + 1}`}
                     />

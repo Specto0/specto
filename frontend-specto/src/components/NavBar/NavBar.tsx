@@ -185,6 +185,15 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
           >
             Séries
           </button>
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() => navigate("/forum")}
+              className="btns-secondary"
+            >
+              Fórum
+            </button>
+          )}
           
           {isAuthenticated && (
           <button

@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy import (
     CheckConstraint, ForeignKey, Integer, Text, Boolean,
-    Date, TIMESTAMP, text, Numeric, Index
+    Date, TIMESTAMP, text, Numeric, Index, String
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import CITEXT, JSONB
@@ -198,3 +198,75 @@ Index(
     unique=True,
 )
 Index("tmdb_cache_genero_idx", TmdbCachedFilme.genero_id)
+
+# ======================
+# Fórum e Chat
+# ======================
+
+class ForumTopic(Base):
+    __tablename__ = "forum_topics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[str] = mapped_column(String(20), nullable=False)  # "movies" | "series" | "custom"
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    
+    # Novos campos para tópicos dinâmicos
+    tmdb_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    media_type: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # "movie" | "tv"
+
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
+
+    posts = relationship("ForumPost", back_populates="topic", cascade="all, delete-orphan")
+    chat_messages = relationship("ChatMessage", back_populates="topic", cascade="all, delete-orphan")
+
+
+class ForumPost(Base):
+    __tablename__ = "forum_posts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("forum_topics.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
+
+    topic = relationship("ForumTopic", back_populates="posts")
+    user = relationship("User")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("forum_topics.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
+
+    topic = relationship("ForumTopic", back_populates="chat_messages")
+    user = relationship("User")
+    likes = relationship("ChatLike", back_populates="message", cascade="all, delete-orphan")
+
+
+class ChatLike(Base):
+    __tablename__ = "chat_likes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    message_id: Mapped[int] = mapped_column(ForeignKey("chat_messages.id", ondelete="CASCADE"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
+
+    message = relationship("ChatMessage", back_populates="likes")
+
+    __table_args__ = (
+        Index("ix_chat_likes_user_message_unq", "user_id", "message_id", unique=True),
+    )
+
+
+Index("forum_topics_type_idx", ForumTopic.type)
+Index("forum_posts_topic_idx", ForumPost.topic_id)
+Index("forum_posts_user_idx", ForumPost.user_id)
+Index("chat_messages_topic_idx", ChatMessage.topic_id)
+Index("chat_messages_user_idx", ChatMessage.user_id)
+Index("chat_likes_message_idx", ChatLike.message_id)
+

@@ -81,6 +81,7 @@ export default function Perfil() {
     filmes: false,
     series: false,
   });
+  const [showCopied, setShowCopied] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeTheme(setThemeMode);
@@ -118,7 +119,7 @@ export default function Perfil() {
       setIsAuthenticated(false);
       setVistos({ filmes: [], series: [] });
       setUser(null);
-       setThemeMode(applyTheme("dark"));
+      setThemeMode(applyTheme("dark"));
       setLoading(false);
       return;
     }
@@ -390,6 +391,24 @@ export default function Perfil() {
                     </div>
                   </div>
                   <div className="perfil-actions">
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        className="perfil-share-btn-text"
+                        onClick={() => {
+                          const url = `${window.location.origin}/u/${user.id}`;
+                          navigator.clipboard.writeText(url);
+                          setShowCopied(true);
+                          setTimeout(() => setShowCopied(false), 2000);
+                        }}
+                      >
+                        Partilhar
+                      </button>
+                      {showCopied && (
+                        <div className="perfil-share-toast">
+                          Link copiado!
+                        </div>
+                      )}
+                    </div>
                     <Link to="/perfil/editar" className="perfil-edit-btn">
                       Editar perfil
                     </Link>

@@ -1,0 +1,493 @@
+/* Layout base - Matching Home.css */
+.forum-page {
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light Mode */
+.forum-page.light {
+  background-color: #dfe9f0;
+  color: #000;
+}
+
+.forum-page.light .forum-header h1 {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.forum-page.light .forum-header p {
+  color: #4b5563;
+}
+
+.forum-page.light .forum-card-top {
+  background-color: #dfe9f0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.forum-page.light .forum-card-top h3 {
+  color: #000;
+}
+
+.forum-page.light .chat-component {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.forum-page.light .chat-header {
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  color: #000;
+}
+
+.forum-page.light .chat-input-area input {
+  background: #fff;
+  color: #000;
+  border: 1px solid #d1d5db;
+}
+
+/* Dark Mode - Matching Home.css (#03162c) */
+.forum-page.dark {
+  background-color: #03162c;
+  color: #fff;
+}
+
+.forum-page.dark .forum-header h1 {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.forum-page.dark .forum-header p {
+  color: #9ca3af;
+}
+
+/* Navbar Overrides to match Home.css */
+.forum-page.dark .navbar {
+  background: var(--navbar-bg, #03162c);
+  transition: background 0.3s, color 0.3s;
+}
+
+.forum-page.light .navbar {
+  background: var(--navbar-bg, #dfe9f0);
+}
+
+.forum-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.forum-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.forum-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.forum-header p {
+  font-size: 1.1rem;
+}
+
+/* Sections */
+.forum-section {
+  margin-bottom: 4rem;
+}
+
+.forum-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-left: 4px solid #4db6f0;
+  padding-left: 8px;
+}
+
+/* Grid Top Items */
+.forum-grid-top {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.forum-card-top {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.forum-card-top:hover {
+  transform: translateY(-5px);
+}
+
+.forum-poster {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 2/3;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.forum-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.forum-card-top:hover .forum-poster img {
+  transform: scale(1.05);
+}
+
+.poster-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1f2937, #111827);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #4b5563;
+}
+
+.forum-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.forum-card-top:hover .forum-overlay {
+  opacity: 1;
+}
+
+.forum-overlay span {
+  background: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+}
+
+.forum-card-top h3 {
+  margin-top: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rating-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  color: #fbbf24;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  z-index: 10;
+}
+
+/* Loading & Error */
+.forum-loading {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.2rem;
+  color: #6b7280;
+}
+
+.forum-error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.forum-page.dark .forum-error {
+  background: #450a0a;
+  color: #fca5a5;
+}
+
+/* Chat Page Specifics */
+.forum-chat-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.forum-chat-full {
+  width: 100%;
+  max-width: 800px;
+}
+
+.forum-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  color: #6b7280;
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.forum-back:hover {
+  color: #3b82f6;
+}
+
+.forum-page.dark .forum-back {
+  color: #9ca3af;
+}
+
+.forum-page.dark .forum-back:hover {
+  color: #60a5fa;
+}
+
+/* Chat Component */
+.chat-component {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+}
+
+.forum-page.dark .chat-component {
+  background: #03162c;
+  /* Match background */
+  border: 1px solid #1e293b;
+  box-shadow: none;
+}
+
+.chat-header {
+  padding: 1rem;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forum-page.dark .chat-header {
+  background: #0f172a;
+  border-color: #1e293b;
+  color: #fff;
+}
+
+.chat-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chat-message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  max-width: 80%;
+}
+
+.chat-message-row.mine {
+  align-self: flex-end;
+  flex-direction: row;
+  /* Avatar on right */
+  justify-content: flex-end;
+}
+
+.chat-message-row.theirs {
+  align-self: flex-start;
+  flex-direction: row;
+  /* Avatar on left */
+}
+
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.chat-avatar-fallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.forum-page.dark .chat-avatar,
+.forum-page.dark .chat-avatar-fallback {
+  border-color: #333;
+}
+
+.chat-bubble {
+  background: #f3f4f6;
+  padding: 0.75rem 1rem;
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  position: relative;
+  word-wrap: break-word;
+}
+
+.forum-page.dark .chat-bubble {
+  background: #1e293b;
+  color: #fff;
+}
+
+.chat-bubble.mine {
+  background: #3b82f6;
+  color: white;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble-meta {
+  font-size: 0.7rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.7;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chat-bubble.mine .chat-bubble-meta {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.chat-input-area {
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.forum-page.dark .chat-input-area {
+  border-color: #1e293b;
+}
+
+.chat-input-area input {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+}
+
+.forum-page.dark .chat-input-area input {
+  background: #0f172a;
+  border-color: #1e293b;
+  color: white;
+}
+
+.chat-input-area button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.chat-input-area button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.chat-bubble-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.chat-like-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #9ca3af;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.chat-like-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #ef4444;
+}
+
+.chat-like-btn.liked {
+  color: #ef4444;
+}
+
+.chat-like-btn.liked svg {
+  fill: #ef4444;
+}
+
+.like-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.chat-bubble.mine .chat-like-btn {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.chat-bubble.mine .chat-like-btn:hover,
+.chat-bubble.mine .chat-like-btn.liked {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.chat-bubble.mine .chat-like-btn.liked svg {
+  fill: #fff;
+}

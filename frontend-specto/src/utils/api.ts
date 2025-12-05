@@ -40,3 +40,9 @@ export const buildApiUrl = (path: string): string => {
   const formattedPath = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE_URL}${formattedPath}`;
 };
+
+export const buildWsUrl = (path: string): string => {
+  const base = API_BASE_URL.replace(/^http/, "ws");
+  const formattedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${formattedPath}`;
+};
