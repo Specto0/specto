@@ -166,32 +166,32 @@ export default function Perfil() {
     };
 
     const carregarVistos = async () => {
-      try {
-        const response = await fetch(buildApiUrl("/vistos"), {
-          headers: { Authorization: `Bearer ${token}` },
-          signal,
-        });
+  try {
+    const response = await fetch(buildApiUrl("/vistos/"), {
+      headers: { Authorization: `Bearer ${token}` },
+      signal,
+    });
 
-        if (response.status === 401) {
-          setIsAuthenticated(false);
-          setError("Precisas de iniciar sessão para veres os teus vistos.");
-          setVistos({ filmes: [], series: [] });
-          return;
-        }
+    if (response.status === 401) {
+      setIsAuthenticated(false);
+      setError("Precisas de iniciar sessão para veres os teus vistos.");
+      setVistos({ filmes: [], series: [] });
+      return;
+    }
 
-        if (!response.ok) {
-          const detail = await response.text();
-          throw new Error(detail || "Erro ao carregar vistos.");
-        }
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(detail || "Erro ao carregar vistos.");
+    }
 
-        const data: VistoResponse = await response.json();
-        setVistos(data);
-      } catch (err) {
-        if (signal.aborted) return;
-        console.error("Erro ao buscar vistos:", err);
-        setError(err instanceof Error ? err.message : "Erro inesperado.");
-      }
-    };
+    const data: VistoResponse = await response.json();
+    setVistos(data);
+  } catch (err) {
+    if (signal.aborted) return;
+    console.error("Erro ao buscar vistos:", err);
+    setError(err instanceof Error ? err.message : "Erro inesperado.");
+  }
+};
 
     Promise.allSettled([carregarUtilizador(), carregarVistos()]).finally(() => {
       if (!signal.aborted) {
