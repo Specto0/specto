@@ -27,6 +27,13 @@ class User(Base):
         Boolean, nullable=False, server_default=text("true")
     )
     criado_em: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
+    
+    # Gamification
+    xp: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    level: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
+
+    # Role
+    role: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'user'"))
 
 class Filme(Base):
     __tablename__ = "filmes"
@@ -270,3 +277,34 @@ Index("chat_messages_topic_idx", ChatMessage.topic_id)
 Index("chat_messages_user_idx", ChatMessage.user_id)
 Index("chat_likes_message_idx", ChatLike.message_id)
 
+Index("chat_likes_message_idx", ChatLike.message_id)
+
+
+# ======================
+# Gamification / Reputation
+# ======================
+
+class Achievement(Base):
+    __tablename__ = "achievements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    icon_url: Mapped[Optional[str]] = mapped_column(Text)
+    xp_reward: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    condition_type: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g., "favorites_count", "comments_count"
+    condition_value: Mapped[int] = mapped_column(Integer, nullable=False)    # e.g., 10, 50
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
+
+
+class UserAchievement(Base):
+    __tablename__ = "user_achievements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    achievement_id: Mapped[int] = mapped_column(ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False)
+    unlocked_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
+
+    __table_args__ = (
+        Index("ix_user_achievements_unq", "user_id", "achievement_id", unique=True),
+    )

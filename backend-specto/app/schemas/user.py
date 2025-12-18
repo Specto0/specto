@@ -17,6 +17,9 @@ class UserRead(BaseModel):
     email: EmailStr
     avatar_url: Optional[str] = None
     theme_mode: ThemeValue = "dark"
+    xp: int = 0
+    level: int = 1
+    role: str = "user"
 
     class Config:
         from_attributes = True  # Pydantic v2

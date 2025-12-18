@@ -585,3 +585,238 @@
     white-space: normal;
   }
 }
+
+/* --- REPUTATION SYSTEM --- */
+
+.perfil-reputation {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.perfil-level-card {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(59, 130, 246, 0.05));
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.home-container.light .perfil-level-card {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(59, 130, 246, 0.02));
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.perfil-level-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.perfil-level-info h2 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #fff;
+}
+
+.home-container.light .perfil-level-info h2 {
+  color: #1e293b;
+}
+
+.perfil-xp {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.home-container.light .perfil-xp {
+  color: #2563eb;
+}
+
+.perfil-xp-bar-container {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.home-container.light .perfil-xp-bar-container {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.perfil-xp-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 999px;
+  transition: width 0.5s ease-out;
+}
+
+.perfil-achievements h3 {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.home-container.light .perfil-achievements h3 {
+  color: #1e293b;
+}
+
+.perfil-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 16px;
+}
+
+.perfil-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.home-container.light .perfil-badge {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.perfil-badge:hover {
+  transform: translateY(-2px);
+}
+
+.perfil-badge.locked {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+.perfil-badge-icon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.perfil-badge-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.perfil-badge-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.home-container.light .perfil-badge-name {
+  color: #334155;
+}
+
+.perfil-empty-badges {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 20px;
+  font-style: italic;
+}
+
+.perfil-next-level {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 8px;
+  text-align: right;
+}
+
+.home-container.light .perfil-next-level {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.perfil-xp-guide {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.home-container.light .perfil-xp-guide {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.perfil-xp-guide h3 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.home-container.light .perfil-xp-guide h3 {
+  color: #1e293b;
+}
+
+.perfil-xp-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.perfil-xp-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.home-container.light .perfil-xp-action {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.xp-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+}
+
+.xp-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.xp-details strong {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.home-container.light .xp-details strong {
+  color: #334155;
+}
+
+.xp-details span {
+  font-size: 0.8rem;
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.home-container.light .xp-details span {
+  color: #2563eb;
+}
+
+.home-container.light .perfil-empty-badges {
+  color: rgba(0, 0, 0, 0.5);
+}

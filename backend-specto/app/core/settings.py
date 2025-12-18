@@ -13,6 +13,10 @@ class Settings:
         # Keep None if neither are set so caller can decide. For local development
         # you can set `DATABASE_URL=sqlite+aiosqlite:///./specto.db` in `.env`.
         self.database_url: str | None = os.getenv("DATABASE_URL")
+        if self.database_url and self.database_url.startswith("postgres://"):
+            self.database_url = self.database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif self.database_url and self.database_url.startswith("postgresql://"):
+            self.database_url = self.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
         self.secret_key: str = os.getenv("SECRET_KEY", "ChurrascoMorterini")
         self.access_token_expire_minutes: int = int(
             os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")

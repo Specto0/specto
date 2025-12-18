@@ -172,6 +172,12 @@ async def criar_comentario(
     )
 
     session.add(comentario)
+    
+    # Gamification Logic
+    from app.services.gamification import GamificationService
+    await GamificationService.award_xp(session, user.id, GamificationService.XP_PER_COMMENT)
+    await GamificationService.check_achievements(session, user.id, "comments_count")
+
     await session.commit()
     await session.refresh(comentario)
 

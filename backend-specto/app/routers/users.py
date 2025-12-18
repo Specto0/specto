@@ -10,6 +10,7 @@ from app.routers.vistos import _map_visto
 from app.schemas.user import UserRead
 from app.schemas.visto import VistoList, VistoItem
 from app.utils.avatars import build_avatar_url
+from app.routers.auth import get_current_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -66,13 +67,34 @@ async def get_public_profile(
     count_likes_res = await session.execute(count_likes_query)
     total_likes_received = count_likes_res.scalar() or 0
 
-    # 4. Montar resposta
+    # 4. Buscar conquistas
+    from app.models import UserAchievement, Achievement
+    achievements_query = (
+        select(Achievement, UserAchievement.unlocked_at)
+        .join(UserAchievement, UserAchievement.achievement_id == Achievement.id)
+        .where(UserAchievement.user_id == user.id)
+    )
+    achievements_res = await session.execute(achievements_query)
+    achievements = [
+        {
+            "id": a.id,
+            "name": a.name,
+            "description": a.description,
+            "icon_url": a.icon_url,
+            "xp_reward": a.xp_reward,
+            "unlocked_at": unlocked_at
+        }
+        for a, unlocked_at in achievements_res.all()
+    ]
+    # 5. Montar resposta
     return {
         "user": {
             "id": user.id,
             "username": user.username,
             "avatar_url": build_avatar_url(user.avatar_url, request),
             "created_at": user.criado_em,
+            "xp": user.xp,
+            "level": user.level,
         },
         "stats": {
             "total_filmes": len(filmes),
@@ -80,8 +102,66 @@ async def get_public_profile(
             "total_comentarios": total_comments,
             "total_likes_recebidos": total_likes_received,
         },
+        "reputation": {
+            "xp": user.xp,
+            "level": user.level,
+            "achievements": achievements
+        },
         "vistos": {
             "filmes": filmes,
             "series": series,
         }
+    }
+
+
+@router.get("/me/reputation")
+async def get_my_reputation(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    from app.models import UserAchievement, Achievement
+    achievements_query = (
+        select(Achievement, UserAchievement.unlocked_at)
+        .join(UserAchievement, UserAchievement.achievement_id == Achievement.id)
+        .where(UserAchievement.user_id == user.id)
+    )
+    achievements_res = await session.execute(achievements_query)
+    achievements = [
+        {
+            "id": a.id,
+            "name": a.name,
+            "description": a.description,
+            "icon_url": a.icon_url,
+            "xp_reward": a.xp_reward,
+            "unlocked_at": unlocked_at
+        }
+        for a, unlocked_at in achievements_res.all()
+    ]
+    
+    # Also fetch all possible achievements to show locked ones
+    all_achievements_res = await session.execute(select(Achievement))
+    all_achievements = all_achievements_res.scalars().all()
+    
+    final_achievements = []
+    unlocked_ids = {a["id"] for a in achievements}
+    unlocked_map = {a["id"]: a for a in achievements}
+    
+    for ach in all_achievements:
+        if ach.id in unlocked_ids:
+            final_achievements.append(unlocked_map[ach.id])
+        else:
+            final_achievements.append({
+                "id": ach.id,
+                "name": ach.name,
+                "description": ach.description,
+                "icon_url": ach.icon_url,
+                "xp_reward": ach.xp_reward,
+                "unlocked_at": None
+            })
+
+    return {
+        "xp": user.xp,
+        "level": user.level,
+        "achievements": final_achievements
     }

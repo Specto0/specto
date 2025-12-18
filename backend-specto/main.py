@@ -7,7 +7,7 @@ from config import API_KEY, BASE_URL
 from routes import filmes, series
 
 # Auth / Users
-from app.routers import auth, vistos, comentarios, users
+from app.routers import auth, vistos, comentarios, users, admin
 from app.routers import forum as forum_router
 from app.schemas.user import UserRead
 from app.utils.http_cache import close_cache_client, cached_get_json
@@ -43,12 +43,13 @@ app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
 # (mantemos sem prefix aqui, pois cada router já tem o seu próprio prefix)
 app.include_router(filmes.router, prefix="/filmes", tags=["Filmes"])
 app.include_router(series.router, prefix="/series", tags=["Séries"])
+# app.include_router(generos.router, prefix="/generos", tags=["Gêneros"]) # Removido: não existe
 app.include_router(auth.router)         # rotas /auth/*
 app.include_router(vistos.router)       # CRUD Vistos
 app.include_router(comentarios.router)  # Comentários
-app.include_router(forum_router.router) # Fórum e chat
+app.include_router(forum_router.router) # Fórum (inclui chat)
 app.include_router(users.router)        # Perfil público
-
+app.include_router(admin.router)        # Admin
 
 # ----------------- Health check / root -----------------
 @app.get("/", tags=["Health"])

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import "./Perfil.css";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
@@ -39,6 +39,8 @@ type UserInfo = {
   email: string;
   theme_mode?: ThemeMode;
   avatar_url?: string | null;
+  xp?: number;
+  level?: number;
 };
 
 const MAX_ITENS = 6;
@@ -61,6 +63,8 @@ const getStoredUser = (): UserInfo | null => {
 };
 
 export default function Perfil() {
+  const { userId } = useParams();
+
   const getInitialTheme = (): ThemeMode => {
     const storedUser = getStoredUser();
     if (storedUser?.theme_mode) {
@@ -73,16 +77,41 @@ export default function Perfil() {
   const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialTheme);
 
   const [vistos, setVistos] = useState<VistoResponse>({ filmes: [], series: [] });
-  const [loading, setLoading] = useState(getInitialAuth);
+  const [loading, setLoading] = useState(true); // Always start loading to decide flow
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(getInitialAuth);
-  const [user, setUser] = useState<UserInfo | null>(() => getStoredUser());
+
+  // "user" is the profile being displayed
+  const [user, setUser] = useState<UserInfo | null>(null);
+
+  // "currentUser" is the logged in user (from local storage)
+  const [currentUser, setCurrentUser] = useState<UserInfo | null>(() => getStoredUser());
+
   const [favoritoLoading, setFavoritoLoading] = useState<Record<number, boolean>>({});
   const [expandir, setExpandir] = useState({
     filmes: false,
     series: false,
   });
   const [showCopied, setShowCopied] = useState(false);
+  const [reputation, setReputation] = useState<{
+    xp: number;
+    level: number;
+    achievements: Array<{
+      id: number;
+      name: string;
+      description: string;
+      icon_url?: string;
+      xp_reward: number;
+      unlocked_at?: string;
+    }>;
+  } | null>(null);
+
+  // Determine if the viewer is the owner of the profile
+  const isOwner = useMemo(() => {
+    if (!userId) return true; // /perfil route
+    if (currentUser && userId && currentUser.id === Number(userId)) return true;
+    return false;
+  }, [userId, currentUser]);
 
   useEffect(() => {
     const unsubscribe = subscribeTheme(setThemeMode);
@@ -96,12 +125,15 @@ export default function Perfil() {
 
   const avatarUrl = user?.avatar_url ? resolveAvatarUrl(user.avatar_url) : null;
 
+  // Listen for storage changes (login/logout in other tabs)
   useEffect(() => {
     const onStorage = () => {
       const token = localStorage.getItem("token");
       setIsAuthenticated(!!token);
       const stored = getStoredUser();
-      setUser(stored);
+      setCurrentUser(stored);
+      // Only update theme if we are the owner or not viewing a specific profile?
+      // For now, keep existing logic but apply to currentUser preferences
       if (stored?.theme_mode) {
         setThemeMode(applyTheme(stored.theme_mode));
       } else if (!token) {
@@ -116,6 +148,48 @@ export default function Perfil() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    setLoading(true);
+    setError(null);
+
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    // SCENARIO 1: Viewing another user's profile (Public View)
+    if (userId) {
+      const loadPublicProfile = async () => {
+        try {
+          const res = await fetch(buildApiUrl(`/users/${userId}/profile`), { signal });
+          if (!res.ok) {
+            if (res.status === 404) throw new Error("Utilizador não encontrado.");
+            throw new Error("Erro ao carregar perfil.");
+          }
+          const data = await res.json();
+
+          // Normalize user data
+          const normalizedUser: UserInfo = {
+            ...data.user,
+            // Public profile might not return theme/email depending on privacy, 
+            // but our endpoint returns them.
+            avatar_url: resolveAvatarUrl(data.user.avatar_url),
+          };
+
+          setUser(normalizedUser);
+          setVistos(data.vistos);
+          setReputation(data.reputation);
+
+        } catch (err) {
+          if (signal.aborted) return;
+          console.error("Erro ao carregar perfil público:", err);
+          setError(err instanceof Error ? err.message : "Erro desconhecido.");
+        } finally {
+          if (!signal.aborted) setLoading(false);
+        }
+      };
+      loadPublicProfile();
+      return () => controller.abort();
+    }
+
+    // SCENARIO 2: Viewing own profile (/perfil)
     if (!token) {
       setIsAuthenticated(false);
       setVistos({ filmes: [], series: [] });
@@ -125,12 +199,7 @@ export default function Perfil() {
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
-    const controller = new AbortController();
-    const { signal } = controller;
-
+    // Fetch own data
     const carregarUtilizador = async () => {
       try {
         const response = await fetch(buildApiUrl("/me"), {
@@ -157,6 +226,7 @@ export default function Perfil() {
           avatar_url: resolveAvatarUrl(data.avatar_url),
         };
         setUser(normalizedUser);
+        setCurrentUser(normalizedUser); // Update current user as well
         localStorage.setItem("user", JSON.stringify(normalizedUser));
         const applied = applyTheme(normalizedTheme);
         setThemeMode(applied);
@@ -194,14 +264,29 @@ export default function Perfil() {
       }
     };
 
-    Promise.allSettled([carregarUtilizador(), carregarVistos()]).finally(() => {
+    const carregarReputacao = async () => {
+      try {
+        const response = await fetch(buildApiUrl("/users/me/reputation"), {
+          headers: { Authorization: `Bearer ${token}` },
+          signal,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setReputation(data);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar reputação:", err);
+      }
+    };
+
+    Promise.allSettled([carregarUtilizador(), carregarVistos(), carregarReputacao()]).finally(() => {
       if (!signal.aborted) {
         setLoading(false);
       }
     });
 
     return () => controller.abort();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, userId]); // Re-run if userId changes
 
   const filmesFavoritos = useMemo(
     () => vistos.filmes.filter((item) => item.favorito),
@@ -229,6 +314,9 @@ export default function Perfil() {
   );
 
   const handleToggleFavorito = async (item: VistoItem) => {
+    // Only allow toggling if it's the owner's profile
+    if (!isOwner) return;
+
     const token = localStorage.getItem("token");
     if (!token) {
       setIsAuthenticated(false);
@@ -294,9 +382,12 @@ export default function Perfil() {
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                onToggleFavorito(item);
+                if (isOwner) {
+                  onToggleFavorito(item);
+                }
               }}
-              disabled={!!favoritoLoading[item.id]}
+              disabled={!!favoritoLoading[item.id] || !isOwner}
+              style={{ cursor: isOwner ? "pointer" : "default", opacity: isOwner ? 1 : 0.7 }}
               aria-pressed={item.favorito}
               aria-label={
                 item.favorito
@@ -329,8 +420,8 @@ export default function Perfil() {
                     <span className="perfil-card-rating">
                       {item.media_avaliacao.toFixed(1)} ⭐
                       {item.votos !== null &&
-                      item.votos !== undefined &&
-                      item.votos > 0
+                        item.votos !== undefined &&
+                        item.votos > 0
                         ? ` · ${item.votos} votos`
                         : ""}
                     </span>
@@ -351,16 +442,39 @@ export default function Perfil() {
     );
   };
 
+  const LEVEL_THRESHOLDS: Record<number, number> = {
+    1: 0,
+    2: 100,
+    3: 300,
+    4: 600,
+    5: 1000,
+    6: 1500,
+    7: 2100,
+    8: 2800,
+    9: 3600,
+    10: 4500
+  };
+
+  const getNextLevelXp = (level: number) => {
+    return LEVEL_THRESHOLDS[level + 1] || LEVEL_THRESHOLDS[10];
+  };
+
+  const currentLevel = user?.level || reputation?.level || 1;
+  const currentXp = user?.xp || reputation?.xp || 0;
+  const nextLevelXp = getNextLevelXp(currentLevel);
+  const progressPercent = Math.min((currentXp / nextLevelXp) * 100, 100);
+
   return (
     <div className={`home-container ${themeMode === "dark" ? "dark" : "light"}`}>
       <NavBar toggleDarkMode={themeMode === "dark"} />
-      {isAuthenticated && loading ? (
+      {loading ? (
         <div className="perfil-loader">
           <LoadingSpinner color="#3b82f6" size="large" />
         </div>
       ) : (
         <div className="perfil-wrapper">
-          {!isAuthenticated ? (
+          {/* If viewing own profile and not authenticated */}
+          {!userId && !isAuthenticated ? (
             <div className="perfil-empty">
               <p>Precisas de iniciar sessão para veres os teus vistos.</p>
               <Link className="perfil-btn" to="/Login">
@@ -370,6 +484,8 @@ export default function Perfil() {
           ) : error ? (
             <div className="perfil-empty">
               <p>{error}</p>
+              {!userId && <Link className="perfil-btn" to="/Login">Iniciar sessão</Link>}
+              {userId && <Link className="perfil-btn" to="/home">Voltar ao Início</Link>}
             </div>
           ) : (
             <>
@@ -388,8 +504,8 @@ export default function Perfil() {
                       )}
                     </div>
                     <div className="perfil-user-meta">
-                      <h1>Olá, {user.username}</h1>
-                      <p>{user.email}</p>
+                      <h1>{isOwner ? `Olá, ${user.username}` : `Perfil de ${user.username}`}</h1>
+                      <p>{isOwner ? user.email : `Membro desde ${new Date().getFullYear()}`}</p>
                     </div>
                   </div>
                   <div className="perfil-actions">
@@ -411,14 +527,84 @@ export default function Perfil() {
                         </div>
                       )}
                     </div>
-                    <Link to="/perfil/editar" className="perfil-edit-btn">
-                      Editar perfil
-                    </Link>
+                    {isOwner && (
+                      <Link to="/perfil/editar" className="perfil-edit-btn">
+                        Editar perfil
+                      </Link>
+                    )}
                   </div>
                 </header>
               )}
 
               <main className="perfil-content">
+                {/* Gamification Section */}
+                <section className="perfil-reputation">
+                  <div className="perfil-level-card">
+                    <div className="perfil-level-info">
+                      <h2>Nível {currentLevel}</h2>
+                      <span className="perfil-xp">
+                        {currentXp} / {nextLevelXp} XP
+                      </span>
+                    </div>
+                    <div className="perfil-xp-bar-container">
+                      <div
+                        className="perfil-xp-bar"
+                        style={{ width: `${progressPercent}%` }}
+                      ></div>
+                    </div>
+                    <p className="perfil-next-level">
+                      Faltam {nextLevelXp - currentXp} XP para o nível {currentLevel + 1}
+                    </p>
+                  </div>
+
+                  {isOwner && (
+                    <div className="perfil-xp-guide">
+                      <h3>Como ganhar XP</h3>
+                      <div className="perfil-xp-actions">
+                        <div className="perfil-xp-action">
+                          <span className="xp-icon">❤️</span>
+                          <div className="xp-details">
+                            <strong>Adicionar aos Favoritos</strong>
+                            <span>+10 XP</span>
+                          </div>
+                        </div>
+                        <div className="perfil-xp-action">
+                          <span className="xp-icon">💬</span>
+                          <div className="xp-details">
+                            <strong>Comentar</strong>
+                            <span>+5 XP</span>
+                          </div>
+                        </div>
+                        <div className="perfil-xp-action">
+                          <span className="xp-icon">👁️</span>
+                          <div className="xp-details">
+                            <strong>Marcar como Visto</strong>
+                            <span>+2 XP</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="perfil-achievements">
+                    <h3>Conquistas</h3>
+                    <div className="perfil-badges-grid">
+                      {reputation?.achievements?.length ? (
+                        reputation.achievements.map((ach) => (
+                          <div key={ach.id} className={`perfil-badge ${ach.unlocked_at ? "unlocked" : "locked"}`} title={ach.description}>
+                            <div className="perfil-badge-icon">
+                              {ach.icon_url ? <img src={ach.icon_url} alt={ach.name} /> : "🏆"}
+                            </div>
+                            <span className="perfil-badge-name">{ach.name}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="perfil-empty-badges">A carregar conquistas...</p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
                 <section>
                   <h2>Filmes vistos</h2>
                   {vistos.filmes.length ? (
@@ -430,9 +616,8 @@ export default function Perfil() {
                       )}
                       {filmesOrdenados.length > MAX_ITENS && (
                         <button
-                          className={`perfil-toggle favoritos ${
-                            expandir.filmes ? "ativo" : ""
-                          }`}
+                          className={`perfil-toggle favoritos ${expandir.filmes ? "ativo" : ""
+                            }`}
                           onClick={() =>
                             setExpandir((prev) => ({
                               ...prev,
@@ -462,9 +647,8 @@ export default function Perfil() {
                       )}
                       {seriesOrdenadas.length > MAX_ITENS && (
                         <button
-                          className={`perfil-toggle favoritos ${
-                            expandir.series ? "ativo" : ""
-                          }`}
+                          className={`perfil-toggle favoritos ${expandir.series ? "ativo" : ""
+                            }`}
                           onClick={() =>
                             setExpandir((prev) => ({
                               ...prev,

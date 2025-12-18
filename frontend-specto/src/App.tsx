@@ -11,8 +11,8 @@ import Perfil from "./components/Perfil/Perfil";
 import PerfilEditar from "./components/Perfil/PerfilEditar";
 import ForumList from "./components/Forum/ForumList";
 import ForumTopicPage from "./components/Forum/ForumTopicPage";
-import PublicProfile from "./components/PublicProfile/PublicProfile";
 
+import AdminDashboard from "./components/Admin/AdminDashboard";
 
 
 import Footer from "./components/Footer/Footer";
@@ -34,7 +34,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forum" element={<ForumList />} />
         <Route path="/forum/:topicId" element={<ForumTopicPage />} />
-        <Route path="/u/:userId" element={<PublicProfile />} />
+        <Route path="/u/:userId" element={<Perfil />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="*" element={<Home />} />
       </Routes>
       <Footer />

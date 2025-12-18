@@ -33,6 +33,9 @@ def user_to_read(user: User, request: Optional[Request] = None) -> UserRead:
         email=user.email,
         avatar_url=build_avatar_url(user.avatar_url, request),
         theme_mode=theme_value,
+        xp=user.xp,
+        level=user.level,
+        role=user.role,
     )
 
 

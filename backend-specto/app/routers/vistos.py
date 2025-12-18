@@ -199,12 +199,23 @@ async def criar_visto(
 
     favorito_flag = bool(payload.favorito) if payload.favorito is not None else False
 
+    # Gamification Logic
+    from app.services.gamification import GamificationService
+    
     if existente:
+        # Se já existia, verificamos se mudou para favorito
+        was_favorite = existente.favorito
         if payload.favorito is not None:
             existente.favorito = favorito_flag
+        
         await session.commit()
         await session.refresh(existente)
         target_visto = existente
+        
+        if not was_favorite and favorito_flag:
+             await GamificationService.award_xp(session, user.id, GamificationService.XP_PER_FAVORITE)
+             await GamificationService.check_achievements(session, user.id, "favorites_count")
+
     else:
         target_visto = Visto(
             user_id=user.id,
@@ -213,6 +224,15 @@ async def criar_visto(
             favorito=favorito_flag,
         )
         session.add(target_visto)
+        
+        # Award XP for watching
+        await GamificationService.award_xp(session, user.id, GamificationService.XP_PER_WATCHED)
+        await GamificationService.check_achievements(session, user.id, "watched_count")
+        
+        if favorito_flag:
+             await GamificationService.award_xp(session, user.id, GamificationService.XP_PER_FAVORITE)
+             await GamificationService.check_achievements(session, user.id, "favorites_count")
+
         await session.commit()
         await session.refresh(target_visto)
 
@@ -234,8 +254,15 @@ async def atualizar_visto(
     if not visto or visto.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Visto não encontrado.")
 
+    was_favorite = visto.favorito
     if payload.favorito is not None:
         visto.favorito = payload.favorito
+
+    # Gamification Logic
+    from app.services.gamification import GamificationService
+    if not was_favorite and payload.favorito:
+         await GamificationService.award_xp(session, user.id, GamificationService.XP_PER_FAVORITE)
+         await GamificationService.check_achievements(session, user.id, "favorites_count")
 
     await session.commit()
     await session.refresh(visto)

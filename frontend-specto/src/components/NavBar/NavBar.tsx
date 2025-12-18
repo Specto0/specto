@@ -15,6 +15,7 @@ type UserInfo = {
   id: number;
   username: string;
   email: string;
+  role?: string;
   theme_mode?: ThemeMode;
   avatar_url?: string | null;
 };
@@ -194,15 +195,15 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
               Fórum
             </button>
           )}
-          
+
           {isAuthenticated && (
-          <button
-            type="button"
-            className="btn-random-game"
-            onClick={() => setIsGameOpen(true)}
-          >
-            Random Movie Game
-          </button>
+            <button
+              type="button"
+              className="btn-random-game"
+              onClick={() => setIsGameOpen(true)}
+            >
+              Random Movie Game
+            </button>
           )}
         </div>
 
@@ -295,6 +296,20 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
                   <img src="/assets/images/images-menu/setting.png" alt="" />
                   <p>Editar Perfil</p>
                 </button>
+
+                {user?.role === "admin" && (
+                  <button
+                    type="button"
+                    className="sub-dropdown-link"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate("/admin");
+                    }}
+                  >
+                    <img src="/assets/images/images-menu/setting.png" alt="" />
+                    <p>Painel Admin</p>
+                  </button>
+                )}
 
                 <button
                   type="button"
