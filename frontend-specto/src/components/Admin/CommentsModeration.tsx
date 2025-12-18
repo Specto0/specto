@@ -15,7 +15,7 @@ type CommentAdmin = {
 export default function CommentsModeration() {
     const [comments, setComments] = useState<CommentAdmin[]>([]);
     const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(0);
+    const [page, _setPage] = useState(0);
     const [error, setError] = useState<string | null>(null);
 
     const fetchComments = async () => {
