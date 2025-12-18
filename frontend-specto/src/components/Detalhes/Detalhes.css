@@ -1123,10 +1123,6 @@
     width: 140px;
   }
 
-  .detalhes-meta {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  }
-
   .detalhes-trailer-controls {
     gap: 12px;
   }

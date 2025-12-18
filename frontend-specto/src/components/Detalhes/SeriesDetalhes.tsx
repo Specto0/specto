@@ -350,35 +350,12 @@ export default function SeriesDetalhes() {
     setActiveTrailerIndex(index);
   };
 
-  const metaItems = [
-    serie?.data_lancamento
-      ? { label: "Estreia", value: serie.data_lancamento }
-      : null,
-    typeof serie?.nota === "number"
-      ? { label: "Nota", value: `${serie.nota.toFixed(1)} ⭐` }
-      : null,
-    serie?.adult !== undefined
-      ? { label: "Classificação", value: serie.adult ? "Adulto" : "Livre" }
-      : null,
-    serie?.original_name && serie.original_name !== serie.titulo
-      ? { label: "Título original", value: serie.original_name }
-      : null,
-    serie?.generos?.length
-      ? { label: "Géneros", value: serie.generos.join(", ") }
-      : null,
-    typeof serie?.temporadas === "number"
-      ? { label: "Temporadas", value: `${serie.temporadas}` }
-      : null,
-    typeof serie?.episodios === "number"
-      ? { label: "Episódios", value: `${serie.episodios}` }
-      : null,
-    typeof serie?.orcamento === "number" && serie.orcamento > 0
-      ? { label: "Orçamento", value: `$${serie.orcamento.toLocaleString()}` }
-      : null,
-    typeof serie?.receita === "number" && serie.receita > 0
-      ? { label: "Receita", value: `$${serie.receita.toLocaleString()}` }
-      : null,
-  ].filter(Boolean) as Array<{ label: string; value: string }>;
+  const estreiaAno = serie?.data_lancamento ? serie.data_lancamento.split("-")[0] : null;
+  const temporadasTexto =
+    typeof serie?.temporadas === "number" ? `${serie.temporadas}T` : null;
+  const episodiosTexto =
+    typeof serie?.episodios === "number" ? `${serie.episodios}E` : null;
+  const temGeneros = Array.isArray(serie?.generos) && serie.generos.length > 0;
 
   const activeTrailer = trailers.length
     ? trailers[Math.min(activeTrailerIndex, trailers.length - 1)]
@@ -450,14 +427,17 @@ export default function SeriesDetalhes() {
 
       <div className="detalhes-container">
         <section className="detalhes-hero">
-          {serie.backdrop && (
-            <img
-              className="detalhes-hero-bg"
-              src={serie.backdrop}
-              alt={serie.titulo}
-            />
-          )}
-          <div className="detalhes-hero-gradient" />
+          <div className="detalhes-hero-bg-wrapper">
+            {serie.backdrop && (
+              <img
+                className="detalhes-hero-bg"
+                src={serie.backdrop}
+                alt={serie.titulo}
+              />
+            )}
+            <div className="detalhes-hero-gradient" />
+          </div>
+
           <div className="detalhes-hero-content">
             {serie.poster && (
               <img
@@ -469,19 +449,58 @@ export default function SeriesDetalhes() {
 
             <div className="detalhes-hero-main">
               <h1 className="detalhes-title">{serie.titulo}</h1>
-              {serie.sinopse && (
-                <p className="detalhes-sinopse">{serie.sinopse}</p>
-              )}
 
-              {metaItems.length > 0 && (
-                <div className="detalhes-meta">
-                  {metaItems.map((item) => (
-                    <div className="detalhes-meta-item" key={item.label}>
-                      <span className="detalhes-meta-label">{item.label}</span>
-                      <span className="detalhes-meta-value">{item.value}</span>
-                    </div>
+              <div className="detalhes-info-line">
+                {estreiaAno && <span>{estreiaAno}</span>}
+                {temporadasTexto && (
+                  <>
+                    <span className="detalhes-separator">•</span>
+                    <span title={`${serie?.temporadas} ${serie?.temporadas === 1 ? "temporada" : "temporadas"}`}>
+                      {temporadasTexto}
+                    </span>
+                  </>
+                )}
+                {episodiosTexto && (
+                  <>
+                    <span className="detalhes-separator">•</span>
+                    <span title={`${serie?.episodios} ${serie?.episodios === 1 ? "episódio" : "episódios"}`}>
+                      {episodiosTexto}
+                    </span>
+                  </>
+                )}
+                {typeof serie.nota === "number" && (
+                  <>
+                    <span className="detalhes-separator">•</span>
+                    <span className="detalhes-rating">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="#fbbf24"
+                        stroke="none"
+                        style={{ marginRight: "4px", marginBottom: "2px" }}
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                      {serie.nota.toFixed(1)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {temGeneros && (
+                <div className="detalhes-genres">
+                  {serie.generos!.map((genero) => (
+                    <span key={genero} className="detalhes-genre-pill">
+                      {genero}
+                    </span>
                   ))}
                 </div>
+              )}
+
+              {serie.sinopse && (
+                <p className="detalhes-sinopse">{serie.sinopse}</p>
               )}
 
               {isAuthenticated ? (
@@ -492,7 +511,41 @@ export default function SeriesDetalhes() {
                     disabled={isSavingVisto || wasAdded}
                     type="button"
                   >
-                    {addButtonLabel}
+                    {wasAdded ? (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        {addButtonLabel}
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        {addButtonLabel}
+                      </>
+                    )}
                   </button>
                   {wasAdded && (
                     <button
@@ -500,7 +553,22 @@ export default function SeriesDetalhes() {
                       onClick={handleRemoverDosVistos}
                       disabled={isSavingVisto}
                       type="button"
+                      title="Remover dos vistos"
                     >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
                       {removeButtonLabel}
                     </button>
                   )}

@@ -421,16 +421,16 @@ export default function FilmesDetalhes() {
 
       <div className="detalhes-container">
         <section className="detalhes-hero">
-          {filme.backdrop && (
-            <div className="detalhes-hero-bg-wrapper">
+          <div className="detalhes-hero-bg-wrapper">
+            {filme.backdrop && (
               <img
                 className="detalhes-hero-bg"
                 src={filme.backdrop}
                 alt={filme.titulo}
               />
-              <div className="detalhes-hero-gradient" />
-            </div>
-          )}
+            )}
+            <div className="detalhes-hero-gradient" />
+          </div>
 
           <div className="detalhes-hero-content">
             {filme.poster && (
