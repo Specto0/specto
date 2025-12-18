@@ -1,10 +1,25 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./LandingPage.css";
 
-const LandingPage: React.FC = () => {
+const carouselImages = [
+  "/assets/images/carousel/img1.jpg",
+  "/assets/images/carousel/img2.jpg",
+  "/assets/images/carousel/img3.jpg",
+  "/assets/images/carousel/img4.jpg",
+];
 
- const navigate = useNavigate();
+const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
+    }, 5000); // Muda a cada 5 segundos
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="landing-page">
@@ -16,11 +31,6 @@ const LandingPage: React.FC = () => {
           <div className="nav-links">
             <button 
             onClick={() => {
-              navigate("/*");
-            }}
-            className="forum-btn"> Forums </button>
-            <button 
-            onClick={() => {
                     navigate("/login");
                   }} 
             className="login-btn"> Entrar </button>
@@ -30,6 +40,18 @@ const LandingPage: React.FC = () => {
 
       <main className="landing-main">
         <section className="hero-section">
+          {/* Background Carousel */}
+          <div className="hero-carousel">
+            {carouselImages.map((image, index) => (
+              <div
+                key={index}
+                className={`carousel-slide ${index === currentImageIndex ? 'active' : ''}`}
+                style={{ backgroundImage: `url(${image})` }}
+              />
+            ))}
+            <div className="carousel-overlay" />
+          </div>
+
           <div className="hero-content">
             <h1 className="hero-title">
               Bem-vindo ao <span className="highlight">Specto</span>
@@ -45,19 +67,6 @@ const LandingPage: React.FC = () => {
               <Link to="/login" className="cta-button secondary">
                 Já tenho conta
               </Link>
-            </div>
-          </div>
-          <div className="hero-visual">
-            <div className="floating-cards">
-              <div className="card card-1">
-                <img src="/assets/images/spectologodark1.png" alt="Specto Dark Logo" />
-              </div>
-              <div className="card card-2">
-                <div className="movie-icon">🎬</div>
-              </div>
-              <div className="card card-3">
-                <div className="series-icon">📺</div>
-              </div>
             </div>
           </div>
         </section>

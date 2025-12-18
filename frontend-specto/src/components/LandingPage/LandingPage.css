@@ -5,7 +5,7 @@
 
 .landing-page {
   min-height: 100vh;
-  background-color:#03162c;
+  background-color: #03162c;
   color: white;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
@@ -17,7 +17,8 @@
 }
 
 /* Reset margins/padding so header can sit flush to screen edges */
-html, body {  
+html,
+body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -78,7 +79,7 @@ html, body {
 
 .login-btn:hover {
   background-color: transparent;
-  color:#3080ef;
+  color: #3080ef;
   font-size: large;
   transition: all 0.3s ease-in-out;
   outline: none;
@@ -97,7 +98,7 @@ html, body {
   background-color: transparent;
   color: #3080ef;
   transition: all 0.3s ease-in-out;
-  outline: none;              
+  outline: none;
   border: transparent;
   padding: 8px 18px;
 }
@@ -107,17 +108,59 @@ html, body {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: clamp(1.5rem, 4vw, 3rem);
-  width: min(1200px, 100%);
+  width: 100%;
   margin: 0 auto;
   gap: clamp(1.5rem, 4vw, 4rem);
   position: relative;
+  overflow: hidden;
+}
+
+/* Hero Background Carousel */
+.hero-carousel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+}
+
+.carousel-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.carousel-slide.active {
+  opacity: 1;
+}
+
+.carousel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+      rgba(3, 22, 44, 0.92) 0%,
+      rgba(3, 22, 44, 0.75) 50%,
+      rgba(3, 22, 44, 0.85) 100%);
+  z-index: 1;
 }
 
 .hero-content {
-  max-width: 600px;
-  text-align: left;
+  max-width: 700px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
 }
 
 .hero-title {
@@ -231,8 +274,15 @@ html, body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 /* Features Section */
