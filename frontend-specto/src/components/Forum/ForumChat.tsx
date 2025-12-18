@@ -83,7 +83,7 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
   const getAvatarUrl = (avatarPath?: string) => {
     if (!avatarPath) return null;
     if (avatarPath.startsWith("http")) return avatarPath;
-    return `http://localhost:8000${avatarPath}`;
+    return buildApiUrl(avatarPath);
   };
 
   const toggleLike = async (msgId: number) => {
