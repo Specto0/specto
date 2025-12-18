@@ -369,7 +369,11 @@ body {
   }
 
   .nav-links button {
-    flex: 1 1 140px;
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0.5rem 1.25rem;
+    font-size: 1rem;
+    align-self: flex-end;
   }
 
   .hero-section {
@@ -445,6 +449,7 @@ body {
   }
 
   .nav-links button {
-    width: 100%;
+    width: auto;
+    align-self: flex-end;
   }
 }
