@@ -12,6 +12,10 @@
 
 }
 
+.landing-main {
+  padding-top: 120px;
+}
+
 /* Reset margins/padding so header can sit flush to screen edges */
 html, body {  
   margin: 0;
@@ -26,19 +30,19 @@ html, body {
   left: 0;
   right: 0;
   z-index: 1000;
-  background:transparent;
+  background: rgba(3, 22, 44, 0.85);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .landing-nav {
-
-  max-width: none;
-  margin: 1;
-  padding: 1rem 2rem; 
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 1rem clamp(1rem, 3vw, 3rem);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 
 .logo {
@@ -56,6 +60,12 @@ html, body {
 .nav-links {
   display: flex;
   gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-links button {
+  min-width: 120px;
 }
 
 .login-btn {
@@ -97,13 +107,17 @@ html, body {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
+  justify-content: space-between;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  position: relative;
 }
 
 .hero-content {
   max-width: 600px;
-  text-align: center;
+  text-align: left;
 }
 
 .hero-title {
@@ -174,10 +188,14 @@ html, body {
   right: 10%;
   transform: translateY(-50%);
   z-index: -1;
+  width: 320px;
+  max-width: 40vw;
 }
 
 .floating-cards {
   position: relative;
+  width: 100%;
+  height: 320px;
 }
 
 .card {
@@ -284,14 +302,35 @@ html, body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .landing-main {
+    padding-top: 96px;
+  }
+
   .landing-nav {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav-links {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .nav-links button {
+    flex: 1 1 140px;
   }
 
   .hero-section {
     flex-direction: column;
     text-align: center;
-    padding: 1rem;
+    padding: 1.5rem 1rem 2.5rem;
+    min-height: auto;
+  }
+
+  .hero-content {
+    text-align: center;
   }
 
   .hero-actions {
@@ -299,17 +338,17 @@ html, body {
     align-items: center;
   }
 
-  .cta-button {
-    width: 100%;
-    max-width: 300px;
+  .hero-visual {
+    position: static;
+    transform: none;
+    width: min(320px, 80%);
+    max-width: 360px;
+    margin: 1rem auto 0;
+    z-index: 0;
   }
 
-  .features-section {
-    padding: 3rem 1rem;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
+  .floating-cards {
+    height: 220px;
   }
 
   .card {
@@ -325,6 +364,19 @@ html, body {
   .card-3 {
     top: 120px;
   }
+
+  .cta-button {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .features-section {
+    padding: 3rem 1rem;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
@@ -337,6 +389,12 @@ html, body {
   }
 
   .nav-links {
-    display: none; /* Hide nav links on very small screens */
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .nav-links button {
+    width: 100%;
   }
 }

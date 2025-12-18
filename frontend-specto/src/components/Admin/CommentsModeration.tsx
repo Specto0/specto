@@ -80,6 +80,7 @@ export default function CommentsModeration() {
                 <p className="error-msg">{error}</p>
             ) : (
                 <div className="admin-table-container">
+                    <div className="admin-table-wrapper">
                     <table className="admin-table">
                         <thead>
                             <tr>
@@ -119,6 +120,7 @@ export default function CommentsModeration() {
                             ))}
                         </tbody>
                     </table>
+                    </div>
                 </div>
             )}
         </div>

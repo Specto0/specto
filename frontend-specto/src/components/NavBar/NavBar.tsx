@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./NavBar.css";
 import "../Home/Home.css";
 import { applyTheme, coerceTheme, type ThemeMode } from "../../utils/theme";
@@ -38,10 +38,12 @@ const getStoredUser = (): UserInfo | null => {
 
 export default function NavBar({ toggleDarkMode }: NavBarProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem("token"));
   const [user, setUser] = useState<UserInfo | null>(() => getStoredUser());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isGameOpen, setIsGameOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -147,6 +149,41 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
     }
   };
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen((prev) => !prev);
+  };
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    closeMobileMenu();
+  };
+
+  const handleLogout = () => {
+    setIsMenuOpen(false);
+    closeMobileMenu();
+    handleAuthClick();
+  };
+
+  const navLinks = [
+    { label: "Filmes", path: "/filmes" },
+    { label: "Séries", path: "/series" },
+    { label: "Fórum", path: "/forum", requiresAuth: true },
+  ];
+
   const userInitials = useMemo(() => {
     if (!user?.username) return "U";
     return user.username.trim().charAt(0).toUpperCase();
@@ -155,10 +192,10 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
   return (
     <>
       <nav className="navbar">
-        <div className="button-group">
+        <div className="navbar-left">
           <button
             type="button"
-            onClick={() => navigate("/home")}
+            onClick={() => handleNavigate("/home")}
             className="btn-home"
           >
             <img
@@ -171,30 +208,34 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
               className="logo-specto"
             />
           </button>
+          <button
+            type="button"
+            className={`navbar-toggle ${isMobileMenuOpen ? "open" : ""}`}
+            onClick={toggleMobileMenu}
+            aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => navigate("/filmes")}
-            className="btns-secondary"
-          >
-            Filmes
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/series")}
-            className="btns-secondary"
-          >
-            Séries
-          </button>
-          {isAuthenticated && (
-            <button
-              type="button"
-              onClick={() => navigate("/forum")}
-              className="btns-secondary"
-            >
-              Fórum
-            </button>
-          )}
+        <div className="button-group desktop-nav">
+          {navLinks.map((link) => {
+            if (link.requiresAuth && !isAuthenticated) return null;
+            return (
+              <button
+                key={link.path}
+                type="button"
+                onClick={() => navigate(link.path)}
+                className="btns-secondary"
+              >
+                {link.label}
+              </button>
+            );
+          })}
 
           {isAuthenticated && (
             <button
@@ -208,7 +249,7 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
         </div>
 
         {!isAuthenticated && (
-          <div className="navbar-actions">
+          <div className="navbar-actions desktop-only">
             <button
               type="button"
               onClick={handleAuthClick}
@@ -224,7 +265,7 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
         )}
 
         {isAuthenticated && (
-          <div className="navbar-profile" ref={dropdownRef}>
+          <div className="navbar-profile desktop-only" ref={dropdownRef}>
             <button
               type="button"
               className="profile-trigger"
@@ -314,10 +355,7 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
                 <button
                   type="button"
                   className="sub-dropdown-link logout"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    handleAuthClick();
-                  }}
+                  onClick={handleLogout}
                 >
                   <img src="/assets/images/images-menu/logout.png" alt="" />
                   <p>Terminar sessão</p>
@@ -327,6 +365,86 @@ export default function NavBar({ toggleDarkMode }: NavBarProps) {
           </div>
         )}
       </nav>
+
+      <div
+        className={`mobile-menu-overlay ${isMobileMenuOpen ? "open" : ""}`}
+        onClick={closeMobileMenu}
+      />
+
+      <aside
+        id="mobile-nav"
+        className={`mobile-menu ${toggleDarkMode ? "" : "light"} ${isMobileMenuOpen ? "open" : ""}`}
+        aria-hidden={!isMobileMenuOpen}
+      >
+        <div className="mobile-menu-panel">
+          {isAuthenticated ? (
+            <div className="mobile-user">
+              <div className="mobile-user-avatar">
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt="Avatar" />
+                ) : user?.username ? (
+                  <span>{userInitials}</span>
+                ) : (
+                  <img src="/assets/images/perfil.png" alt="Perfil" />
+                )}
+              </div>
+              <div className="mobile-user-meta">
+                <strong>{user?.username || "Utilizador"}</strong>
+                {user?.email && <span>{user.email}</span>}
+              </div>
+            </div>
+          ) : (
+            <div className="mobile-auth-actions">
+              <button type="button" onClick={() => handleNavigate("/login")}>Entrar</button>
+              <button type="button" onClick={() => handleNavigate("/register")} className="secondary">Criar conta</button>
+            </div>
+          )}
+
+          <div className="mobile-menu-links">
+            {navLinks.map((link) => {
+              if (link.requiresAuth && !isAuthenticated) return null;
+              return (
+                <button
+                  key={`mobile-${link.path}`}
+                  type="button"
+                  onClick={() => handleNavigate(link.path)}
+                  className="mobile-menu-link"
+                >
+                  {link.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {isAuthenticated && (
+            <div className="mobile-menu-actions">
+              <button type="button" onClick={() => handleNavigate("/perfil")}>
+                Ver perfil
+              </button>
+              <button type="button" onClick={() => handleNavigate("/perfil/editar")}>
+                Editar perfil
+              </button>
+              {user?.role === "admin" && (
+                <button type="button" onClick={() => handleNavigate("/admin")}>
+                  Painel admin
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  closeMobileMenu();
+                  setIsGameOpen(true);
+                }}
+              >
+                Random Movie Game
+              </button>
+              <button type="button" className="logout" onClick={handleLogout}>
+                Terminar sessão
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
       <RandomMovieGame isOpen={isGameOpen} onClose={() => setIsGameOpen(false)} />
     </>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
@@ -67,6 +67,40 @@ export default function AdminDashboard() {
 
         fetchStats();
     }, [navigate]);
+
+    const activityLogs = useMemo(() => {
+        if (!stats) return [];
+        return stats.recent_users.slice(0, 6).map((user) => ({
+            id: user.id,
+            title: "Novo Registo",
+            description: `${user.username} criou conta`,
+            date: new Date(user.created_at).toLocaleDateString(),
+        }));
+    }, [stats]);
+
+    const registrationChartData = useMemo(() => {
+        if (!stats) return [];
+        const cutoff = Date.now() - 1000 * 60 * 60 * 24 * 30;
+        const counts = stats.recent_users.reduce<Record<string, number>>((acc, user) => {
+            const createdAt = new Date(user.created_at);
+            if (createdAt.getTime() < cutoff) return acc;
+            const isoDate = createdAt.toISOString().slice(0, 10);
+            acc[isoDate] = (acc[isoDate] || 0) + 1;
+            return acc;
+        }, {});
+        return Object.entries(counts)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([iso, count]) => ({
+                iso,
+                count,
+                label: new Date(iso).toLocaleDateString(),
+            }));
+    }, [stats]);
+
+    const chartMax = useMemo(() => {
+        if (!registrationChartData.length) return 1;
+        return Math.max(...registrationChartData.map((item) => item.count));
+    }, [registrationChartData]);
 
     if (loading) {
         return (
@@ -169,6 +203,53 @@ export default function AdminDashboard() {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                        <div className="admin-insights-grid">
+                            <div className="admin-card-panel">
+                                <div className="panel-header">
+                                    <h3>Registos Recentes</h3>
+                                    <span>{activityLogs.length} eventos</span>
+                                </div>
+                                {activityLogs.length === 0 ? (
+                                    <p className="empty-panel">Sem eventos recentes.</p>
+                                ) : (
+                                    <ul className="admin-log-list">
+                                        {activityLogs.map((log) => (
+                                            <li key={`${log.id}-${log.date}`} className="log-item">
+                                                <div className="log-icon">📝</div>
+                                                <div className="log-details">
+                                                    <strong>{log.title}</strong>
+                                                    <p>{log.description}</p>
+                                                    <small>{log.date}</small>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                            <div className="admin-card-panel">
+                                <div className="panel-header">
+                                    <h3>Gráfico de Registos</h3>
+                                    <span>Últimos 30 dias</span>
+                                </div>
+                                {registrationChartData.length === 0 ? (
+                                    <p className="empty-panel">Sem dados suficientes.</p>
+                                ) : (
+                                    <div className="registration-chart">
+                                        {registrationChartData.map((item) => (
+                                            <div key={item.iso} className="chart-bar">
+                                                <div
+                                                    className="bar-fill"
+                                                    style={{ height: `${(item.count / chartMax) * 100}%` }}
+                                                />
+                                                <span className="bar-count">{item.count}</span>
+                                                <span className="bar-date">{item.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
