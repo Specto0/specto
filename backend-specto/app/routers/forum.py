@@ -277,9 +277,28 @@ async def websocket_forum(
         if history_payload:
             await websocket.send_json({"type": "history", "messages": history_payload})
 
+        # Enviar contagem de utilizadores online
+        online_count = len(manager.connections.get(topic_id, []))
+        await manager.broadcast(topic_id, {"type": "online_count", "count": online_count})
+
         # Loop principal de mensagens
         while True:
             raw = await websocket.receive_text()
+            
+            # Tentar parsear como JSON primeiro (para eventos de typing)
+            try:
+                import json
+                parsed = json.loads(raw)
+                if isinstance(parsed, dict) and parsed.get("type") == "typing":
+                    # Broadcast do evento de typing para todos exceto o remetente
+                    await manager.broadcast(topic_id, {
+                        "type": "typing", 
+                        "username": user.username
+                    })
+                    continue
+            except (json.JSONDecodeError, TypeError):
+                pass  # Não é JSON, tratar como mensagem normal
+            
             message = raw.strip()
             if not message:
                 continue
@@ -302,6 +321,9 @@ async def websocket_forum(
 
     except WebSocketDisconnect:
         manager.disconnect(topic_id, websocket)
+        # Enviar contagem atualizada quando alguém sai
+        online_count = len(manager.connections.get(topic_id, []))
+        await manager.broadcast(topic_id, {"type": "online_count", "count": online_count})
     except Exception:
         manager.disconnect(topic_id, websocket)
         await websocket.close(code=status.WS_1011_INTERNAL_ERROR, reason="Erro no chat")

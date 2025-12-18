@@ -95,6 +95,9 @@ export default function ForumList() {
     }
   };
 
+  // Determina se um item está "em alta" (para demo, top 2 de cada categoria)
+  const isHot = (index: number) => index < 2;
+
   if (!token) return null;
 
   return (
@@ -115,12 +118,15 @@ export default function ForumList() {
             <section className="forum-section">
               <h2>🔥 Top 5 Filmes</h2>
               <div className="forum-grid-top">
-                {topList.movies.map((movie) => (
+                {topList.movies.map((movie, index) => (
                   <div
                     key={movie.id}
                     className="forum-card-top"
                     onClick={() => handleItemClick(movie, "movie")}
                   >
+                    {isHot(index) && (
+                      <span className="hot-badge">🔥 Em alta</span>
+                    )}
                     <div className="forum-poster">
                       {movie.poster_url ? (
                         <img src={movie.poster_url} alt={movie.title} />
@@ -131,8 +137,11 @@ export default function ForumList() {
                         <span>Entrar no Chat</span>
                       </div>
                     </div>
-                    <h3>{movie.title}</h3>
                     {movie.rating && <span className="rating-badge">⭐ {movie.rating.toFixed(1)}</span>}
+                    <h3>{movie.title}</h3>
+                    <div className="topic-stats">
+                      <span className="topic-stat">💬 Chat ativo</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -141,12 +150,15 @@ export default function ForumList() {
             <section className="forum-section">
               <h2>📺 Top 5 Séries</h2>
               <div className="forum-grid-top">
-                {topList.series.map((serie) => (
+                {topList.series.map((serie, index) => (
                   <div
                     key={serie.id}
                     className="forum-card-top"
                     onClick={() => handleItemClick(serie, "tv")}
                   >
+                    {isHot(index) && (
+                      <span className="hot-badge">🔥 Em alta</span>
+                    )}
                     <div className="forum-poster">
                       {serie.poster_url ? (
                         <img src={serie.poster_url} alt={serie.title} />
@@ -157,8 +169,11 @@ export default function ForumList() {
                         <span>Entrar no Chat</span>
                       </div>
                     </div>
-                    <h3>{serie.title}</h3>
                     {serie.rating && <span className="rating-badge">⭐ {serie.rating.toFixed(1)}</span>}
+                    <h3>{serie.title}</h3>
+                    <div className="topic-stats">
+                      <span className="topic-stat">💬 Chat ativo</span>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -93,6 +93,8 @@ export default function Perfil() {
     series: false,
   });
   const [showCopied, setShowCopied] = useState(false);
+  const [filmesTab, setFilmesTab] = useState<"todos" | "favoritos" | "vistos">("todos");
+  const [seriesTab, setSeriesTab] = useState<"todos" | "favoritos" | "vistos">("todos");
   const [reputation, setReputation] = useState<{
     xp: number;
     level: number;
@@ -606,65 +608,135 @@ export default function Perfil() {
                 </section>
 
                 <section>
-                  <h2>Filmes vistos</h2>
-                  {vistos.filmes.length ? (
-                    <>
-                      {renderCards(
-                        filmesOrdenados,
-                        expandir.filmes,
-                        handleToggleFavorito
-                      )}
-                      {filmesOrdenados.length > MAX_ITENS && (
-                        <button
-                          className={`perfil-toggle favoritos ${expandir.filmes ? "ativo" : ""
-                            }`}
-                          onClick={() =>
-                            setExpandir((prev) => ({
-                              ...prev,
-                              filmes: !prev.filmes,
-                            }))
-                          }
-                        >
-                          {expandir.filmes
-                            ? "Fechar favoritos"
-                            : "Mostrar favoritos"}
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <p className="perfil-empty">Ainda não tens filmes vistos.</p>
-                  )}
+                  <h2>Filmes</h2>
+                  <div className="perfil-tabs">
+                    <button 
+                      className={`perfil-tab ${filmesTab === "todos" ? "active" : ""}`}
+                      onClick={() => setFilmesTab("todos")}
+                    >
+                      📽️ Todos ({vistos.filmes.length})
+                    </button>
+                    <button 
+                      className={`perfil-tab ${filmesTab === "favoritos" ? "active" : ""}`}
+                      onClick={() => setFilmesTab("favoritos")}
+                    >
+                      ❤️ Favoritos ({filmesFavoritos.length})
+                    </button>
+                    <button 
+                      className={`perfil-tab ${filmesTab === "vistos" ? "active" : ""}`}
+                      onClick={() => setFilmesTab("vistos")}
+                    >
+                      👁️ Só Vistos ({filmesNaoFavoritos.length})
+                    </button>
+                  </div>
+                  {(() => {
+                    const listaFilmes = filmesTab === "favoritos" 
+                      ? filmesFavoritos 
+                      : filmesTab === "vistos" 
+                        ? filmesNaoFavoritos 
+                        : filmesOrdenados;
+                    
+                    if (!listaFilmes.length) {
+                      return (
+                        <p className="perfil-empty">
+                          {filmesTab === "favoritos" 
+                            ? "Ainda não tens filmes favoritos. Clica no ♡ para adicionar!" 
+                            : filmesTab === "vistos" 
+                              ? "Todos os teus filmes são favoritos!" 
+                              : "Ainda não tens filmes vistos."}
+                        </p>
+                      );
+                    }
+                    
+                    return (
+                      <>
+                        {renderCards(
+                          listaFilmes,
+                          expandir.filmes,
+                          handleToggleFavorito
+                        )}
+                        {listaFilmes.length > MAX_ITENS && (
+                          <button
+                            className={`perfil-toggle ${expandir.filmes ? "ativo" : ""}`}
+                            onClick={() =>
+                              setExpandir((prev) => ({
+                                ...prev,
+                                filmes: !prev.filmes,
+                              }))
+                            }
+                          >
+                            {expandir.filmes ? "Ver menos" : `Ver todos (${listaFilmes.length})`}
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
                 </section>
 
                 <section>
-                  <h2>Séries vistas</h2>
-                  {vistos.series.length ? (
-                    <>
-                      {renderCards(
-                        seriesOrdenadas,
-                        expandir.series,
-                        handleToggleFavorito
-                      )}
-                      {seriesOrdenadas.length > MAX_ITENS && (
-                        <button
-                          className={`perfil-toggle favoritos ${expandir.series ? "ativo" : ""
-                            }`}
-                          onClick={() =>
-                            setExpandir((prev) => ({
-                              ...prev,
-                              series: !prev.series,
-                            }))
-                          }
-                        >
-                          {expandir.series
-                            ? "Fechar favoritos"
-                            : "Mostrar favoritos"}
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <p className="perfil-empty">Ainda não tens séries vistas.</p>
-                  )}
+                  <h2>Séries</h2>
+                  <div className="perfil-tabs">
+                    <button 
+                      className={`perfil-tab ${seriesTab === "todos" ? "active" : ""}`}
+                      onClick={() => setSeriesTab("todos")}
+                    >
+                      📺 Todas ({vistos.series.length})
+                    </button>
+                    <button 
+                      className={`perfil-tab ${seriesTab === "favoritos" ? "active" : ""}`}
+                      onClick={() => setSeriesTab("favoritos")}
+                    >
+                      ❤️ Favoritas ({seriesFavoritas.length})
+                    </button>
+                    <button 
+                      className={`perfil-tab ${seriesTab === "vistos" ? "active" : ""}`}
+                      onClick={() => setSeriesTab("vistos")}
+                    >
+                      👁️ Só Vistas ({seriesNaoFavoritas.length})
+                    </button>
+                  </div>
+                  {(() => {
+                    const listaSeries = seriesTab === "favoritos" 
+                      ? seriesFavoritas 
+                      : seriesTab === "vistos" 
+                        ? seriesNaoFavoritas 
+                        : seriesOrdenadas;
+                    
+                    if (!listaSeries.length) {
+                      return (
+                        <p className="perfil-empty">
+                          {seriesTab === "favoritos" 
+                            ? "Ainda não tens séries favoritas. Clica no ♡ para adicionar!" 
+                            : seriesTab === "vistos" 
+                              ? "Todas as tuas séries são favoritas!" 
+                              : "Ainda não tens séries vistas."}
+                        </p>
+                      );
+                    }
+                    
+                    return (
+                      <>
+                        {renderCards(
+                          listaSeries,
+                          expandir.series,
+                          handleToggleFavorito
+                        )}
+                        {listaSeries.length > MAX_ITENS && (
+                          <button
+                            className={`perfil-toggle ${expandir.series ? "ativo" : ""}`}
+                            onClick={() =>
+                              setExpandir((prev) => ({
+                                ...prev,
+                                series: !prev.series,
+                              }))
+                            }
+                          >
+                            {expandir.series ? "Ver menos" : `Ver todas (${listaSeries.length})`}
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
                 </section>
               </main>
             </>

@@ -1,5 +1,6 @@
 import React from "react";
 import { buildWsUrl, buildApiUrl } from "../../utils/api";
+import { resolveAvatarUrl } from "../../utils/avatar";
 import "./Forum.css";
 
 type ChatMessage = {
@@ -18,22 +19,70 @@ type Props = {
   currentUser: { id: number; username: string; avatar_url?: string };
 };
 
+
+
 export default function ForumChat({ topicId, token, currentUser }: Props) {
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [input, setInput] = React.useState("");
   const [status, setStatus] = React.useState<"connecting" | "connected" | "closed">(
     "connecting"
   );
+  const [typingUsers, setTypingUsers] = React.useState<string[]>([]);
+  const [onlineCount, setOnlineCount] = React.useState(0);
+
   const socketRef = React.useRef<WebSocket | null>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const messagesAreaRef = React.useRef<HTMLDivElement>(null);
+  const lastTypingSentRef = React.useRef<number>(0);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Auto-scroll só quando está perto do fundo ou é mensagem própria
+  const shouldAutoScroll = React.useRef(true);
+
+  const checkScrollPosition = () => {
+    if (messagesAreaRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesAreaRef.current;
+      // Se está a menos de 100px do fundo, fazer auto-scroll
+      shouldAutoScroll.current = scrollHeight - scrollTop - clientHeight < 100;
+    }
+  };
+
+  const scrollToBottom = (force = false) => {
+    if (force || shouldAutoScroll.current) {
+      if (messagesAreaRef.current) {
+        // Usar scrollTop no container em vez de scrollIntoView para não afetar a página
+        messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
+      }
+    }
   };
 
   React.useEffect(() => {
-    scrollToBottom();
+    // Só fazer scroll se shouldAutoScroll é true
+    if (shouldAutoScroll.current) {
+      scrollToBottom();
+    }
   }, [messages]);
+
+  // Som de notificação
+  const playNotificationSound = React.useCallback(() => {
+    // Usar Web Audio API para um som simples
+    try {
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = "sine";
+      gainNode.gain.value = 0.1;
+      
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.1);
+    } catch {
+      // Ignorar erros de áudio
+    }
+  }, []);
 
   React.useEffect(() => {
     const wsUrl = `${buildWsUrl(`forum/${topicId}/ws`)}?token=${encodeURIComponent(
@@ -50,8 +99,20 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
         const payload = JSON.parse(event.data);
         if (payload.type === "history" && Array.isArray(payload.messages)) {
           setMessages(payload.messages);
+          // Scroll para o fundo ao carregar histórico
+          setTimeout(() => scrollToBottom(true), 100);
         } else if (payload.type === "message" && payload.data) {
+          const isOwnMessage = payload.data.user.id === currentUser.id;
           setMessages((prev) => [...prev, payload.data]);
+          
+          // Tocar som apenas se não é mensagem própria
+          if (!isOwnMessage) {
+            playNotificationSound();
+          }
+          // Scroll automático se for mensagem própria
+          if (isOwnMessage) {
+            setTimeout(() => scrollToBottom(true), 50);
+          }
         } else if (payload.type === "like_update" && payload.data) {
           setMessages((prev) =>
             prev.map((msg) =>
@@ -60,6 +121,22 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
                 : msg
             )
           );
+        } else if (payload.type === "typing" && payload.username) {
+          // Adicionar utilizador à lista de typing
+          if (payload.username !== currentUser.username) {
+            setTypingUsers((prev) => {
+              if (!prev.includes(payload.username)) {
+                return [...prev, payload.username];
+              }
+              return prev;
+            });
+            // Remover após 3 segundos
+            setTimeout(() => {
+              setTypingUsers((prev) => prev.filter((u) => u !== payload.username));
+            }, 3000);
+          }
+        } else if (payload.type === "online_count") {
+          setOnlineCount(payload.count || 0);
         }
       } catch (err) {
         console.error("Erro a ler mensagem do socket", err);
@@ -69,7 +146,24 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
     return () => {
       ws.close();
     };
-  }, [topicId, token]);
+  }, [topicId, token, currentUser.id, currentUser.username, playNotificationSound]);
+
+  // Enviar evento de typing com debounce
+  const sendTypingEvent = React.useCallback(() => {
+    const now = Date.now();
+    // Só enviar se passou mais de 2 segundos desde o último
+    if (now - lastTypingSentRef.current > 2000 && socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({ type: "typing" }));
+      lastTypingSentRef.current = now;
+    }
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    if (e.target.value.trim()) {
+      sendTypingEvent();
+    }
+  };
 
   const sendMessage = () => {
     const text = input.trim();
@@ -80,14 +174,10 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
     setInput("");
   };
 
-  const getAvatarUrl = (avatarPath?: string) => {
-    if (!avatarPath) return null;
-    if (avatarPath.startsWith("http")) return avatarPath;
-    return buildApiUrl(avatarPath);
-  };
+  // Usando a função padronizada resolveAvatarUrl em vez de uma local
 
   const toggleLike = async (msgId: number) => {
-    // Otimistic update
+    // Optimistic update
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id === msgId) {
@@ -109,14 +199,28 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
       });
     } catch (err) {
       console.error("Erro ao dar like", err);
-      // Revert on error (optional, keeping simple for now)
     }
   };
 
   const renderAvatar = (user: { username: string; avatar_url?: string }) => {
-    const url = getAvatarUrl(user.avatar_url);
+    const url = resolveAvatarUrl(user.avatar_url);
     if (url) {
-      return <img src={url} alt={user.username} className="chat-avatar" />;
+      return (
+        <img 
+          src={url} 
+          alt={user.username} 
+          className="chat-avatar"
+          onError={(e) => {
+            // Se a imagem falhar, substituir por fallback
+            const target = e.currentTarget;
+            target.style.display = 'none';
+            const fallback = document.createElement('div');
+            fallback.className = 'chat-avatar-fallback';
+            fallback.textContent = user.username.charAt(0).toUpperCase();
+            target.parentNode?.insertBefore(fallback, target);
+          }}
+        />
+      );
     }
     return (
       <div className="chat-avatar-fallback">
@@ -125,16 +229,42 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
     );
   };
 
+  // Formatar mensagem com menções destacadas
+  const formatMessage = (text: string) => {
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("@")) {
+        return (
+          <span key={index} className="chat-mention">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="chat-component">
       <div className="chat-header">
         <span>Chat em Tempo Real</span>
-        <span className={`badge badge-${status}`}>
-          {status === "connected" ? "Ligado" : status === "connecting" ? "A ligar..." : "Desligado"}
-        </span>
+        <div className="chat-header-right">
+          {onlineCount > 0 && (
+            <span className="online-badge">
+              🟢 {onlineCount} online
+            </span>
+          )}
+          <span className={`badge badge-${status}`}>
+            {status === "connected" ? "Ligado" : status === "connecting" ? "A ligar..." : "Desligado"}
+          </span>
+        </div>
       </div>
 
-      <div className="chat-messages-area">
+      <div 
+        className="chat-messages-area" 
+        ref={messagesAreaRef}
+        onScroll={checkScrollPosition}
+      >
         {messages.map((msg) => {
           const isMine = msg.user.id === currentUser.id;
           return (
@@ -144,7 +274,7 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
                 <div className="chat-bubble-meta">
                   {msg.user.username} • {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
-                <div>{msg.message}</div>
+                <div>{formatMessage(msg.message)}</div>
 
                 <div className="chat-bubble-actions">
                   <button
@@ -163,16 +293,36 @@ export default function ForumChat({ topicId, token, currentUser }: Props) {
             </div>
           );
         })}
-        {messages.length === 0 && <div className="forum-muted" style={{ textAlign: "center", marginTop: "2rem" }}>Sem mensagens ainda. Sê o primeiro!</div>}
+        {messages.length === 0 && (
+          <div className="forum-muted" style={{ textAlign: "center", marginTop: "2rem" }}>
+            Sem mensagens ainda. Sê o primeiro!
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Indicador de "está a escrever" */}
+      {typingUsers.length > 0 && (
+        <div className="typing-indicator">
+          <div className="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <span>
+            {typingUsers.length === 1
+              ? `${typingUsers[0]} está a escrever...`
+              : `${typingUsers.slice(0, 2).join(", ")} estão a escrever...`}
+          </span>
+        </div>
+      )}
 
       <div className="chat-input-area">
         <input
           type="text"
           placeholder="Escreve uma mensagem..."
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           maxLength={500}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />

@@ -1,0 +1,305 @@
+/* Recomendações Section */
+.recomendacoes-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 3rem;
+    padding: 2rem 1.5rem 2.5rem;
+    position: relative;
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.03) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.recomendacoes-section.dark {
+    color: #fff;
+}
+
+.recomendacoes-section.light {
+    color: #1e293b;
+}
+
+.recomendacoes-header {
+    margin-bottom: 1.5rem;
+}
+
+.recomendacoes-section h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid #f59e0b;
+    padding-left: 12px;
+}
+
+.recomendacoes-section.dark h2 {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.recomendacoes-subtitle {
+    font-size: 0.95rem;
+    opacity: 0.7;
+    margin-left: 16px;
+}
+
+/* Baseado em */
+.baseado-em {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.baseado-em>span {
+    opacity: 0.6;
+}
+
+.baseado-em-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.baseado-em-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.baseado-em-tag:hover {
+    background: rgba(245, 158, 11, 0.25);
+    transform: translateY(-1px);
+}
+
+.recomendacoes-section.light .baseado-em-tag {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.baseado-em-more {
+    opacity: 0.5;
+    font-size: 0.85rem;
+}
+
+/* Grid */
+.recomendacoes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.25rem;
+}
+
+/* Card */
+.recomendacao-card {
+    position: relative;
+    text-decoration: none;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.recomendacoes-section.dark .recomendacao-card {
+    background: rgba(15, 23, 42, 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.recomendacoes-section.light .recomendacao-card {
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.recomendacao-card:hover {
+    transform: translateY(-6px);
+}
+
+.recomendacoes-section.dark .recomendacao-card:hover {
+    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.2);
+}
+
+.recomendacoes-section.light .recomendacao-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Poster */
+.recomendacao-poster {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+}
+
+.recomendacao-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.recomendacao-card:hover .recomendacao-poster img {
+    transform: scale(1.05);
+}
+
+.recomendacao-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    color: #64748b;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.recomendacao-rating {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    color: #fbbf24;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.recomendacao-tipo {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.recomendacao-tipo.filme {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+}
+
+.recomendacao-tipo.serie {
+    background: rgba(139, 92, 246, 0.9);
+    color: white;
+}
+
+/* Info */
+.recomendacao-info {
+    padding: 0.75rem;
+}
+
+.recomendacao-info h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+.recomendacoes-section.dark .recomendacao-info h3 {
+    color: #fff;
+}
+
+.recomendacoes-section.light .recomendacao-info h3 {
+    color: #1e293b;
+}
+
+.recomendacao-ano {
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+/* Loading & Empty */
+.recomendacoes-loading {
+    display: flex;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.recomendacoes-empty {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(245, 158, 11, 0.08);
+    border-radius: 16px;
+    border: 1px dashed rgba(245, 158, 11, 0.3);
+}
+
+.recomendacoes-empty p {
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.recomendacoes-btn {
+    display: inline-flex;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    text-decoration: none;
+    border-radius: 999px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.recomendacoes-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .recomendacoes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 1rem;
+    }
+
+    .recomendacoes-section h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Expand/Collapse Toggle */
+.recomendacoes-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 1.25rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px dashed rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    color: #f59e0b;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.recomendacoes-toggle:hover {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.5);
+    transform: translateY(-1px);
+}
+
+.recomendacoes-section.light .recomendacoes-toggle {
+    color: #d97706;
+}
+
+.recomendacoes-toggle svg {
+    transition: transform 0.3s ease;
+}

@@ -287,3 +287,126 @@ async def remover_visto(
     await session.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# --- Personalized Recommendations ---
+import asyncio
+from config import API_KEY, BASE_URL
+from app.utils.http_cache import cached_get_json
+
+IMG_BASE = "https://image.tmdb.org/t/p"
+
+
+def _format_recommendation(item: dict, media_type: str) -> dict:
+    """Formata um item de recomendação."""
+    title_key = "title" if media_type == "movie" else "name"
+    date_key = "release_date" if media_type == "movie" else "first_air_date"
+    
+    return {
+        "id": item["id"],
+        "tipo": "filme" if media_type == "movie" else "serie",
+        "titulo": item.get(title_key),
+        "poster": f"{IMG_BASE}/w500{item['poster_path']}" if item.get("poster_path") else None,
+        "backdrop": f"{IMG_BASE}/w500{item['backdrop_path']}" if item.get("backdrop_path") else None,
+        "nota": item.get("vote_average"),
+        "data_lancamento": item.get(date_key),
+        "sinopse": item.get("overview", "")[:200] + "..." if item.get("overview") and len(item.get("overview", "")) > 200 else item.get("overview"),
+    }
+
+
+async def _fetch_tmdb_recommendations(tmdb_id: int, media_type: str) -> list:
+    """Busca recomendações da TMDB para um filme ou série."""
+    url = f"{BASE_URL}/{media_type}/{tmdb_id}/recommendations?api_key={API_KEY}&language=pt-PT"
+    try:
+        data = await cached_get_json(url)
+        return data.get("results", [])[:5]  # Limitar a 5 por item
+    except Exception:
+        return []
+
+
+@router.get("/recomendacoes")
+async def get_recomendacoes(
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    """
+    Retorna recomendações personalizadas baseadas nos filmes e séries que o utilizador viu.
+    Prioriza favoritos para gerar recomendações mais relevantes.
+    """
+    # Buscar todos os vistos do utilizador com os filmes/séries associados
+    stmt = (
+        select(Visto, Filme, Serie)
+        .outerjoin(Filme, Filme.id == Visto.filme_id)
+        .outerjoin(Serie, Serie.id == Visto.serie_id)
+        .where(Visto.user_id == user.id)
+        .order_by(Visto.favorito.desc(), Visto.data_visto.desc())  # Favoritos primeiro
+    )
+
+    result = await session.execute(stmt)
+    vistos_data = result.all()
+
+    if not vistos_data:
+        return {
+            "recomendacoes": [],
+            "baseado_em": [],
+            "mensagem": "Marca alguns filmes ou séries como vistos para receberes recomendações personalizadas!"
+        }
+
+    # Coletar IDs de filmes/séries já vistos para excluir das recomendações
+    vistos_filme_ids = set()
+    vistos_serie_ids = set()
+    
+    for visto, filme, serie in vistos_data:
+        if filme:
+            vistos_filme_ids.add(filme.tmdb_id)
+        if serie:
+            vistos_serie_ids.add(serie.tmdb_id)
+
+    # Pegar os últimos 5 vistos (priorizando favoritos) para buscar recomendações
+    vistos_para_recomendar = vistos_data[:5]
+    
+    baseado_em = []
+    tasks = []
+    
+    for visto, filme, serie in vistos_para_recomendar:
+        if filme:
+            baseado_em.append({"tipo": "filme", "titulo": filme.titulo, "tmdb_id": filme.tmdb_id})
+            tasks.append(_fetch_tmdb_recommendations(filme.tmdb_id, "movie"))
+        elif serie:
+            baseado_em.append({"tipo": "serie", "titulo": serie.nome, "tmdb_id": serie.tmdb_id})
+            tasks.append(_fetch_tmdb_recommendations(serie.tmdb_id, "tv"))
+
+    # Buscar recomendações em paralelo
+    all_recommendations = await asyncio.gather(*tasks)
+    
+    # Processar e remover duplicados
+    seen_ids = {"filme": set(), "serie": set()}
+    unique_recommendations = []
+    
+    for recs in all_recommendations:
+        for item in recs:
+            item_id = item["id"]
+            # Determinar tipo baseado nas chaves presentes
+            is_movie = "title" in item
+            media_type = "movie" if is_movie else "tv"
+            tipo = "filme" if is_movie else "serie"
+            
+            # Excluir se já visto ou já adicionado
+            already_watched = (tipo == "filme" and item_id in vistos_filme_ids) or \
+                            (tipo == "serie" and item_id in vistos_serie_ids)
+            
+            if not already_watched and item_id not in seen_ids[tipo]:
+                seen_ids[tipo].add(item_id)
+                formatted = _format_recommendation(item, media_type)
+                unique_recommendations.append(formatted)
+
+    # Ordenar por nota e limitar a 20
+    unique_recommendations.sort(key=lambda x: x.get("nota") or 0, reverse=True)
+    unique_recommendations = unique_recommendations[:20]
+
+    return {
+        "recomendacoes": unique_recommendations,
+        "baseado_em": baseado_em,
+        "mensagem": f"Recomendações baseadas em {len(baseado_em)} {'título' if len(baseado_em) == 1 else 'títulos'} que viste"
+    }
+

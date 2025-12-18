@@ -14,7 +14,7 @@ export default function UsersTable() {
     const [users, setUsers] = useState<UserAdmin[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const [page, _setPage] = useState(0);
+    const [page] = useState(0);
     const [error, setError] = useState<string | null>(null);
 
     const fetchUsers = async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
@@ -19,6 +19,7 @@ type FilmeAPI = {
   poster_path?: string | null;
   poster?: string | null;
   release_date?: string | null;
+  data_lancamento?: string | null;
   ano?: string | number | null;
 };
 
@@ -61,7 +62,7 @@ const mapFilme = (item: FilmeAPI): Filme => ({
   id: item.id,
   titulo: normalizeTitulo(item),
   poster: item.poster_path ?? item.poster ?? null,
-  ano: normalizeAno(item.release_date ?? item.ano),
+  ano: normalizeAno(item.data_lancamento ?? item.release_date ?? item.ano),
   tipo: "filme",
 });
 
@@ -73,6 +74,7 @@ const getPosterUrl = (poster: string | null) => {
 
 const Filmes = () => {
   const [movies, setMovies] = useState<Filme[]>([]);
+  const [popularMovies, setPopularMovies] = useState<Filme[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"az" | "za" | "anoC" | "anoD">("az");
@@ -84,6 +86,7 @@ const Filmes = () => {
     return unsubscribe;
   }, []);
 
+  // Carregar filmes populares no início
   useEffect(() => {
     setLoading(true);
     fetch(buildApiUrl("/filmes/populares"))
@@ -103,36 +106,73 @@ const Filmes = () => {
           new Map(filmesFormatados.map((f) => [f.id, f])).values()
         );
 
+        setPopularMovies(filmesUnicos);
         setMovies(filmesUnicos);
       })
       .catch((error) => console.error("Erro ao carregar filmes:", error))
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredMovies = useMemo(() => {
-    return movies
-      .filter((movie) =>
-        movie.titulo.toLowerCase().includes(filter.toLowerCase())
-      )
-      .sort((a, b) => {
-        switch (sortOrder) {
-          case "az":
-            return a.titulo.localeCompare(b.titulo);
-          case "za":
-            return b.titulo.localeCompare(a.titulo);
-          case "anoC":
-            return (a.ano || 0) - (b.ano || 0);
-          case "anoD":
-            return (b.ano || 0) - (a.ano || 0);
-          default:
-            return 0;
-        }
-      });
-  }, [movies, filter, sortOrder]);
+  // Pesquisar na API quando o filtro muda
+  const searchMovies = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setMovies(popularMovies);
+      return;
+    }
 
-  const totalPages = Math.ceil(filteredMovies.length / MOVIES_PER_PAGE);
+    try {
+      const response = await fetch(buildApiUrl(`/filmes/pesquisa?query=${encodeURIComponent(query.trim())}`));
+      if (!response.ok) throw new Error("Erro na pesquisa");
+      const data = await response.json();
+      
+      const filmesArray: FilmeAPI[] = Array.isArray(data.results) ? data.results : data;
+      const filmesFormatados = filmesArray
+        .filter((item): item is FilmeAPI => typeof item?.id === "number")
+        .map(mapFilme);
+
+      const filmesUnicos = Array.from(
+        new Map(filmesFormatados.map((f) => [f.id, f])).values()
+      );
+
+      setMovies(filmesUnicos);
+    } catch (error) {
+      console.error("Erro ao pesquisar filmes:", error);
+      // Fallback para filtragem local
+      setMovies(popularMovies.filter((movie) =>
+        movie.titulo.toLowerCase().includes(query.toLowerCase())
+      ));
+    }
+  }, [popularMovies]);
+
+  // Debounce da pesquisa
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchMovies(filter);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [filter, searchMovies]);
+
+  const sortedMovies = useMemo(() => {
+    return [...movies].sort((a, b) => {
+      switch (sortOrder) {
+        case "az":
+          return a.titulo.localeCompare(b.titulo);
+        case "za":
+          return b.titulo.localeCompare(a.titulo);
+        case "anoC":
+          return (a.ano || 0) - (b.ano || 0);
+        case "anoD":
+          return (b.ano || 0) - (a.ano || 0);
+        default:
+          return 0;
+      }
+    });
+  }, [movies, sortOrder]);
+
+  const totalPages = Math.ceil(sortedMovies.length / MOVIES_PER_PAGE);
   const startIndex = (currentPage - 1) * MOVIES_PER_PAGE;
-  const currentMovies = filteredMovies.slice(
+  const currentMovies = sortedMovies.slice(
     startIndex,
     startIndex + MOVIES_PER_PAGE
   );
@@ -220,7 +260,7 @@ const Filmes = () => {
           </div>
         )}
 
-        {filteredMovies.length > MOVIES_PER_PAGE && (
+        {sortedMovies.length > MOVIES_PER_PAGE && (
           <div className="pagination-container">
             <button onClick={prevPage} disabled={currentPage === 1}>
               ⬅ Anterior

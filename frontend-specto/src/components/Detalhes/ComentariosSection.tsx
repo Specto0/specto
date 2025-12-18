@@ -392,10 +392,19 @@ export default function ComentariosSection({
               <div className="comentario-autor">
                 <span className="comentario-avatar">
                   {comentario.avatarUrl ? (
-                    <img src={comentario.avatarUrl} alt={comentario.username} />
-                  ) : (
-                    comentario.username.charAt(0).toUpperCase()
-                  )}
+                    <img 
+                      src={comentario.avatarUrl} 
+                      alt={comentario.username}
+                      onError={(e) => {
+                        // Se falhar, esconder imagem e mostrar fallback
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  {/* Fallback sempre presente, escondido quando há imagem */}
+                  <span className="avatar-fallback" style={{ display: comentario.avatarUrl ? 'none' : 'flex' }}>
+                    {comentario.username.charAt(0).toUpperCase()}
+                  </span>
                 </span>
                 <div>
                   <p className="comentario-nome">{comentario.username}</p>

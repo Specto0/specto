@@ -4,6 +4,7 @@ import "./Home.css";
 import NavBar from "../NavBar/NavBar.tsx";
 import Skeleton from "../Skeleton/Skeleton";
 import TrailerModal from "../TrailerModal/TrailerModal";
+import Recomendacoes from "../Recomendacoes/Recomendacoes";
 import "../NavBar/NavBar.css";
 import "../Perfil/Perfil.css";
 import { readTheme, subscribeTheme, type ThemeMode } from "../../utils/theme";
@@ -13,6 +14,7 @@ export type ItemMedia = {
   id: number;
   titulo: string;
   poster: string | null;
+  backdrop: string | null;
   tipo: "filme" | "serie";
   rating?: number | null;
   votes?: number | null;
@@ -24,6 +26,7 @@ export default function Home() {
   const [searching, setSearching] = useState(false);
   const [heroIndex, setHeroIndex] = useState(0);
   const [selectedTrailer, setSelectedTrailer] = useState<string | null>(null);
+  const [isAuthenticated] = useState(() => !!localStorage.getItem("token"));
   const navigate = useNavigate();
 
   const [filmesPopulares, setFilmesPopulares] = useState<ItemMedia[]>([]);
@@ -48,6 +51,7 @@ export default function Home() {
     id: f.id,
     titulo: f.titulo ?? f.title ?? "Sem título",
     poster: f.poster ?? f.poster_path ?? null,
+    backdrop: f.backdrop ?? f.backdrop_path ?? null,
     tipo: "filme",
     rating:
       parseNumeric(f.vote_average) ??
@@ -62,6 +66,7 @@ export default function Home() {
     id: s.id,
     titulo: s.titulo ?? s.name ?? "Sem título",
     poster: s.poster ?? s.poster_path ?? null,
+    backdrop: s.backdrop ?? s.backdrop_path ?? null,
     tipo: "serie",
     rating:
       parseNumeric(s.vote_average) ??
@@ -171,6 +176,19 @@ export default function Home() {
     if (!poster) return posterPlaceholder;
     if (poster.startsWith("http")) return poster;
     return `https://image.tmdb.org/t/p/w500${poster}`;
+  };
+
+  // Função para obter backdrop de alta resolução (hero carousel)
+  const getBackdropUrl = (backdrop: string | null, poster: string | null) => {
+    // Preferir backdrop, fallback para poster
+    const image = backdrop || poster;
+    if (!image) return posterPlaceholder;
+    if (image.startsWith("http")) {
+      // Se já é URL completa, substituir resolução
+      return image.replace("/w500", "/w1280").replace("/w780", "/w1280");
+    }
+    // Usar w1280 para alta resolução no hero
+    return `https://image.tmdb.org/t/p/w1280${image}`;
   };
 
   const Carousel = ({ items }: { items: ItemMedia[] }) => {
@@ -309,7 +327,8 @@ export default function Home() {
         <section
           className="home-hero"
           style={{
-            backgroundImage: `linear-gradient(120deg, rgba(8,12,20,0.82) 20%, rgba(8,12,20,0.4) 60%, rgba(8,12,20,0.9) 90%), url(${getPosterUrl(
+            backgroundImage: `linear-gradient(120deg, rgba(8,12,20,0.82) 20%, rgba(8,12,20,0.4) 60%, rgba(8,12,20,0.9) 90%), url(${getBackdropUrl(
+              featured[heroIndex % featured.length].backdrop,
               featured[heroIndex % featured.length].poster
             )})`,
           }}
@@ -511,6 +530,9 @@ export default function Home() {
         </>
       ) : (
         <>
+          {/* Recomendações personalizadas - só para utilizadores autenticados */}
+          {isAuthenticated && <Recomendacoes themeMode={themeMode} />}
+          
           <section>
             <h2>🎬 Filmes Populares</h2>
             <Carousel items={filmesPopulares} />

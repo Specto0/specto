@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../NavBar/NavBar";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
@@ -19,6 +19,7 @@ type SerieAPI = {
   poster_path?: string | null;
   poster?: string | null;
   first_air_date?: string | null;
+  data_lancamento?: string | null;
   ano?: string | number | null;
 };
 
@@ -60,7 +61,7 @@ const mapSerie = (item: SerieAPI): Serie => ({
   id: item.id,
   titulo: normalizeTitulo(item),
   poster: item.poster_path ?? item.poster ?? null,
-  ano: normalizeAno(item.first_air_date ?? item.ano),
+  ano: normalizeAno(item.data_lancamento ?? item.first_air_date ?? item.ano),
   tipo: "serie",
 });
 
@@ -72,6 +73,7 @@ const getPosterUrl = (poster: string | null) => {
 
 const Series = () => {
   const [series, setSeries] = useState<Serie[]>([]);
+  const [popularSeries, setPopularSeries] = useState<Serie[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"az" | "za" | "anoC" | "anoD">("az");
@@ -83,6 +85,7 @@ const Series = () => {
     return unsubscribe;
   }, []);
 
+  // Carregar séries populares no início
   useEffect(() => {
     setLoading(true);
     fetch(buildApiUrl("/series/populares"))
@@ -99,36 +102,73 @@ const Series = () => {
           new Map(seriesFormatadas.map((s) => [s.id, s])).values()
         );
 
+        setPopularSeries(seriesUnicas);
         setSeries(seriesUnicas);
       })
       .catch((error) => console.error("Erro ao carregar séries:", error))
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredSeries = useMemo(() => {
-    return series
-      .filter((serie) =>
-        serie.titulo.toLowerCase().includes(filter.toLowerCase())
-      )
-      .sort((a, b) => {
-        switch (sortOrder) {
-          case "az":
-            return a.titulo.localeCompare(b.titulo);
-          case "za":
-            return b.titulo.localeCompare(a.titulo);
-          case "anoC":
-            return (a.ano || 0) - (b.ano || 0);
-          case "anoD":
-            return (b.ano || 0) - (a.ano || 0);
-          default:
-            return 0;
-        }
-      });
-  }, [series, filter, sortOrder]);
+  // Pesquisar na API quando o filtro muda
+  const searchSeries = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSeries(popularSeries);
+      return;
+    }
 
-  const totalPages = Math.ceil(filteredSeries.length / SERIES_PER_PAGE);
+    try {
+      const response = await fetch(buildApiUrl(`/series/pesquisa?query=${encodeURIComponent(query.trim())}`));
+      if (!response.ok) throw new Error("Erro na pesquisa");
+      const data = await response.json();
+      
+      const seriesArray: SerieAPI[] = Array.isArray(data.results) ? data.results : data;
+      const seriesFormatadas = seriesArray
+        .filter((item): item is SerieAPI => typeof item?.id === "number")
+        .map(mapSerie);
+
+      const seriesUnicas = Array.from(
+        new Map(seriesFormatadas.map((s) => [s.id, s])).values()
+      );
+
+      setSeries(seriesUnicas);
+    } catch (error) {
+      console.error("Erro ao pesquisar séries:", error);
+      // Fallback para filtragem local
+      setSeries(popularSeries.filter((serie) =>
+        serie.titulo.toLowerCase().includes(query.toLowerCase())
+      ));
+    }
+  }, [popularSeries]);
+
+  // Debounce da pesquisa
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchSeries(filter);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [filter, searchSeries]);
+
+  const sortedSeries = useMemo(() => {
+    return [...series].sort((a, b) => {
+      switch (sortOrder) {
+        case "az":
+          return a.titulo.localeCompare(b.titulo);
+        case "za":
+          return b.titulo.localeCompare(a.titulo);
+        case "anoC":
+          return (a.ano || 0) - (b.ano || 0);
+        case "anoD":
+          return (b.ano || 0) - (a.ano || 0);
+        default:
+          return 0;
+      }
+    });
+  }, [series, sortOrder]);
+
+  const totalPages = Math.ceil(sortedSeries.length / SERIES_PER_PAGE);
   const startIndex = (currentPage - 1) * SERIES_PER_PAGE;
-  const currentSeries = filteredSeries.slice(
+  const currentSeries = sortedSeries.slice(
     startIndex,
     startIndex + SERIES_PER_PAGE
   );
@@ -216,7 +256,7 @@ const Series = () => {
           </div>
         )}
 
-        {filteredSeries.length > SERIES_PER_PAGE && (
+        {sortedSeries.length > SERIES_PER_PAGE && (
           <div className="pagination-container">
             <button onClick={prevPage} disabled={currentPage === 1}>
               ⬅ Anterior

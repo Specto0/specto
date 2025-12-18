@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./RandomMovieGame.css";
 import { buildApiUrl } from "@/utils/api";
@@ -6,6 +6,7 @@ import { buildApiUrl } from "@/utils/api";
 type RandomMovieGameProps = {
   isOpen: boolean;
   onClose: () => void;
+  themeMode?: "dark" | "light";
 };
 
 type QuestionOption = {
@@ -15,7 +16,7 @@ type QuestionOption = {
 };
 
 type Question = {
-  id: "genre" | "vibe" | "period";
+  id: "mediaType" | "genre" | "vibe" | "period";
   title: string;
   helper: string;
   options: QuestionOption[];
@@ -49,6 +50,15 @@ type ApiMovie = {
 
 const QUESTIONS: Question[] = [
   {
+    id: "mediaType",
+    title: "Filme ou Série?",
+    helper: "O que te apetece ver hoje?",
+    options: [
+      { value: "movie", label: "🎥 Filme", helper: "Uma história completa" },
+      { value: "tv", label: "📺 Série", helper: "Vários episódios" },
+    ],
+  },
+  {
     id: "genre",
     title: "Que género combina contigo hoje?",
     helper: "Escolhe o tipo de história que te apetece explorar.",
@@ -64,7 +74,7 @@ const QUESTIONS: Question[] = [
   {
     id: "vibe",
     title: "Qual o mood da sessão?",
-    helper: "Isto ajuda a afinar o tom do filme.",
+    helper: "Isto ajuda a afinar o tom do conteúdo.",
     options: [
       { value: "intenso", label: "Intenso", helper: "Sequências épicas" },
       { value: "leve", label: "Leve e descontraído", helper: "Boa vibe com pipocas" },
@@ -76,7 +86,7 @@ const QUESTIONS: Question[] = [
   {
     id: "period",
     title: "Preferes algo mais recente ou clássico?",
-    helper: "Os grandes filmes aparecem em todas as eras.",
+    helper: "Os grandes títulos aparecem em todas as eras.",
     options: [
       { value: "novo", label: "Lançamentos recentes", helper: "Ideias frescas" },
       { value: "classico", label: "Clássicos modernos", helper: "2000s e 2010s" },
@@ -881,8 +891,13 @@ const mapApiMovieToSuggestion = (movie: ApiMovie, answers: Record<string, string
   };
 };
 
+const MATCHABLE_QUESTIONS = QUESTIONS.filter(q => q.id !== "mediaType");
+
 const getMatchScore = (movie: MovieSuggestion, answers: Record<string, string>) =>
-  QUESTIONS.reduce((score, question) => score + (movie[question.id] === answers[question.id] ? 1 : 0), 0);
+  MATCHABLE_QUESTIONS.reduce((score, question) => {
+    const key = question.id as keyof MovieSuggestion;
+    return score + (movie[key] === answers[question.id] ? 1 : 0);
+  }, 0);
 
 const pickSuggestionFromPool = (pool: MovieSuggestion[], lastId: number | null) => {
   if (!pool.length) return null;
@@ -904,7 +919,10 @@ const buildSuggestionPool = (answers: Record<string, string>) => {
   }
 
   const looseMatches = MOVIE_BANK.filter((movie) =>
-    QUESTIONS.some((question) => movie[question.id] === answers[question.id])
+    MATCHABLE_QUESTIONS.some((question) => {
+      const key = question.id as keyof MovieSuggestion;
+      return movie[key] === answers[question.id];
+    })
   );
   if (looseMatches.length > 0) {
     return Array.from(new Map([...exactMatches, ...strongMatches, ...looseMatches].map((movie) => [movie.id, movie])).values());
@@ -913,7 +931,7 @@ const buildSuggestionPool = (answers: Record<string, string>) => {
   return MOVIE_BANK;
 };
 
-export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProps) {
+export default function RandomMovieGame({ isOpen, onClose, themeMode = "dark" }: RandomMovieGameProps) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<MovieSuggestion | null>(null);
@@ -921,6 +939,9 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [lastSuggestionId, setLastSuggestionId] = useState<number | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<"in" | "out">("in");
+  const questionRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const currentQuestion = QUESTIONS[step];
@@ -962,6 +983,53 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
       .join(" · ");
   }, [answers, result]);
 
+  // Trigger confetti when result appears
+  useEffect(() => {
+    if (result) {
+      setShowConfetti(true);
+      const timer = setTimeout(() => setShowConfetti(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [result]);
+
+  const handleSurprise = async () => {
+    setIsFetching(true);
+    setResult(null);
+    setFetchError(null);
+    setIsQuizComplete(true);
+    
+    try {
+      // Random media type
+      const mediaType = Math.random() > 0.5 ? "movie" : "tv";
+      const endpoint = mediaType === "movie" ? "/filmes/populares" : "/series/populares";
+      const response = await fetch(buildApiUrl(endpoint));
+      if (!response.ok) throw new Error("Falha ao obter conteúdo");
+      
+      const items = await response.json();
+      const randomItem = items[Math.floor(Math.random() * Math.min(items.length, 20))];
+      
+      const suggestion: MovieSuggestion = {
+        id: randomItem.id,
+        title: randomItem.titulo || randomItem.titulo_original || "Título desconhecido",
+        genre: "surpresa",
+        vibe: "surpresa",
+        period: "surpresa",
+        description: randomItem.sinopse || "Sem descrição disponível.",
+        highlight: mediaType === "movie" ? "🎥 Filme surpresa!" : "📺 Série surpresa!",
+        poster: randomItem.poster || posterPlaceholder,
+      };
+      
+      setAnswers({ mediaType, genre: "surpresa", vibe: "surpresa", period: "surpresa" });
+      setResult(suggestion);
+      setLastSuggestionId(suggestion.id);
+    } catch (error) {
+      console.warn("Surprise error:", error);
+      setFetchError("Não conseguimos surpreender-te. Tenta novamente!");
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
   const finalizeGame = async (finalAnswers: Record<string, string>) => {
     setIsFetching(true);
     setResult(null);
@@ -969,10 +1037,19 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
 
     try {
       const genreId = GENRE_MAP[finalAnswers.genre];
-      const endpoint = genreId ? `/filmes/genero/${genreId}` : "/filmes/populares";
+      const mediaType = finalAnswers.mediaType || "movie";
+      
+      // Escolher endpoint baseado no tipo de media
+      let endpoint: string;
+      if (mediaType === "tv") {
+        endpoint = genreId ? `/series/genero/${genreId}` : "/series/populares";
+      } else {
+        endpoint = genreId ? `/filmes/genero/${genreId}` : "/filmes/populares";
+      }
+      
       const response = await fetch(buildApiUrl(endpoint));
       if (!response.ok) {
-        throw new Error("Falha ao obter filmes por género");
+        throw new Error(`Falha ao obter ${mediaType === "tv" ? "séries" : "filmes"} por género`);
       }
       const apiMovies = (await response.json()) as ApiMovie[];
       const filteredMovies = applyAnswerFilters(apiMovies, finalAnswers);
@@ -991,8 +1068,8 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
       setResult(suggestion);
       setLastSuggestionId(suggestion.id);
     } catch (error) {
-      console.warn("RandomMovieGame: erro ao procurar filmes", error);
-      setFetchError("Não encontrámos filmes com essas preferências. Tenta novamente.");
+      console.warn("RandomMovieGame: erro ao procurar conteúdo", error);
+      setFetchError("Não encontrámos conteúdo com essas preferências. Tenta novamente.");
     } finally {
       setIsFetching(false);
     }
@@ -1017,7 +1094,11 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
       onClose();
       return;
     }
-    setStep((prev) => Math.max(prev - 1, 0));
+    setSlideDirection("out");
+    setTimeout(() => {
+      setStep((prev) => Math.max(prev - 1, 0));
+      setSlideDirection("in");
+    }, 150);
     setResult(null);
     setFetchError(null);
     setIsQuizComplete(false);
@@ -1036,7 +1117,8 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
   const handleViewDetails = () => {
     if (!result) return;
     onClose();
-    navigate(`/filme/${result.id}`);
+    const mediaType = answers.mediaType || "movie";
+    navigate(mediaType === "tv" ? `/serie/${result.id}` : `/filme/${result.id}`);
   };
 
   const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -1053,20 +1135,48 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
   };
 
   return (
-    <div className={`movie-game-overlay ${isOpen ? "open" : ""}`} onClick={handleOverlayClick}>
+    <div className={`movie-game-overlay ${isOpen ? "open" : ""} ${themeMode}`} onClick={handleOverlayClick}>
       <div className="movie-game-panel" role="dialog" aria-modal="true" aria-label="Random Movie Game">
         <button type="button" className="movie-game-close" onClick={onClose} aria-label="Fechar jogo">
           ×
         </button>
 
         <div className="movie-game-header">
-          <h2>Random Movie Game</h2>
-          <p>Responde a 3 perguntas rápidas e descobre um filme à tua medida.</p>
+          <h2>🎲 Random Movie Game</h2>
+          <p>Responde a {QUESTIONS.length} perguntas rápidas e descobre um título à tua medida.</p>
+          
+          {/* Botão Surpreende-me */}
+          {!isQuizComplete && !isFetching && (
+            <button 
+              type="button" 
+              className="movie-game-surprise"
+              onClick={handleSurprise}
+            >
+              ✨ Surpreende-me!
+            </button>
+          )}
         </div>
 
+        {/* Barra de Progresso */}
         {!isQuizComplete && (
-          <div className="movie-game-question">
-            <span className="movie-game-step">Pergunta {step + 1} / {QUESTIONS.length}</span>
+          <div className="movie-game-progress">
+            <div className="movie-game-progress-bar">
+              <div 
+                className="movie-game-progress-fill" 
+                style={{ width: `${((step + 1) / QUESTIONS.length) * 100}%` }}
+              />
+            </div>
+            <span className="movie-game-progress-text">
+              {step + 1} de {QUESTIONS.length}
+            </span>
+          </div>
+        )}
+
+        {!isQuizComplete && (
+          <div 
+            ref={questionRef}
+            className={`movie-game-question movie-game-slide-${slideDirection}`}
+          >
             <h3>{currentQuestion.title}</h3>
             <p>{currentQuestion.helper}</p>
             <div className="movie-game-options">
@@ -1098,7 +1208,19 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
 
         {result && (
           <div className="movie-game-result">
-            <p className="movie-game-summary">Combinação escolhida: {answerSummary}</p>
+            {/* Confetti */}
+            {showConfetti && (
+              <div className="movie-game-confetti" aria-hidden="true">
+                {"🎉".repeat(8).split("").map((_, i) => (
+                  <span key={i} className="confetti-piece" style={{ animationDelay: `${i * 0.1}s` }}>
+                    {["  🎉", "✨", "🎊", "🌟", "🎥", "📺"][i % 6]}
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="movie-game-summary">
+              {answers.genre === "surpresa" ? "✨ Surpresa total!" : `Combinação: ${answerSummary}`}
+            </p>
             <div
               className="movie-card"
               role="button"
@@ -1110,7 +1232,9 @@ export default function RandomMovieGame({ isOpen, onClose }: RandomMovieGameProp
                 <img src={result.poster || posterPlaceholder} alt={`Poster de ${result.title}`} />
               </div>
               <div className="movie-card-body">
-                <p className="movie-card-chip">Filme sugerido</p>
+                <p className="movie-card-chip">
+                  {answers.mediaType === "tv" ? "📺 Série sugerida" : "🎥 Filme sugerido"}
+                </p>
                 <h3>{result.title}</h3>
                 <p>{result.description}</p>
                 <p className="movie-card-highlight">{result.highlight}</p>
