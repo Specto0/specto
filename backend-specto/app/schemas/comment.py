@@ -49,6 +49,18 @@ class CommentCreate(BaseModel):
         return texto_limpo
 
 
+class CommentUpdate(BaseModel):
+    texto: constr(min_length=1, max_length=2000)
+
+    @field_validator("texto")
+    @classmethod
+    def validar_texto(cls, valor: str) -> str:
+        texto_limpo = valor.strip()
+        if not texto_limpo:
+            raise ValueError("O comentário não pode estar vazio.")
+        return texto_limpo
+
+
 class CommentLikeResponse(BaseModel):
     liked: bool
     likes: int

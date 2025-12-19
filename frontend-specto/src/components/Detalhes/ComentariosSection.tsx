@@ -122,6 +122,8 @@ export default function ComentariosSection({
   const [comentarioEmResposta, setComentarioEmResposta] = useState<number | null>(null);
   const [respostasRascunho, setRespostasRascunho] = useState<Record<number, string>>({});
   const [respostasVisiveis, setRespostasVisiveis] = useState<Record<number, boolean>>({});
+  const [comentarioEmEdicao, setComentarioEmEdicao] = useState<number | null>(null);
+  const [edicaoRascunho, setEdicaoRascunho] = useState<Record<number, string>>({});
   const [alerta, setAlerta] = useState<string | null>(null);
 
   const [authSnapshot, setAuthSnapshot] = useState<AuthSnapshot>(() => ({
@@ -376,6 +378,97 @@ export default function ComentariosSection({
     }));
   };
 
+  const handleAbrirEdicao = (comentario: ComentarioNode) => {
+    setComentarioEmEdicao(comentario.id);
+    setEdicaoRascunho((prev) => ({ ...prev, [comentario.id]: comentario.content }));
+  };
+
+  const handleCancelarEdicao = (comentarioId: number) => {
+    setComentarioEmEdicao(null);
+    setEdicaoRascunho((prev) => {
+      const { [comentarioId]: _, ...resto } = prev;
+      return resto;
+    });
+  };
+
+  const atualizarComentarioNaLista = (
+    lista: ComentarioNode[],
+    comentarioId: number,
+    novoTexto: string
+  ): ComentarioNode[] =>
+    lista.map((comentario) => {
+      if (comentario.id === comentarioId) {
+        return { ...comentario, content: novoTexto };
+      }
+      if (comentario.replies.length) {
+        return {
+          ...comentario,
+          replies: atualizarComentarioNaLista(comentario.replies, comentarioId, novoTexto),
+        };
+      }
+      return comentario;
+    });
+
+  const handleGuardarEdicao = async (comentarioId: number) => {
+    const texto = (edicaoRascunho[comentarioId] || "").trim();
+    if (!texto) {
+      setAlerta("O comentário não pode estar vazio.");
+      return;
+    }
+
+    const snapshot: AuthSnapshot = {
+      token: localStorage.getItem("token"),
+      user: getStoredUser(),
+    };
+    setAuthSnapshot(snapshot);
+
+    if (!snapshot.token) {
+      emitirAvisoAutenticacao();
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        buildApiUrl(`/comentarios/${comentarioId}`),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${snapshot.token}`,
+          },
+          body: JSON.stringify({ texto }),
+        }
+      );
+
+      if (response.status === 401) {
+        emitirAvisoAutenticacao();
+        return;
+      }
+
+      if (response.status === 403) {
+        setAlerta("Não tens permissão para editar este comentário.");
+        return;
+      }
+
+      if (!response.ok) {
+        const detail = await response.json().catch(() => null);
+        const mensagem =
+          (detail && (detail.detail || detail.message)) ||
+          "Não foi possível editar o comentário.";
+        throw new Error(mensagem);
+      }
+
+      setComentarios((prev) => atualizarComentarioNaLista(prev, comentarioId, texto));
+      handleCancelarEdicao(comentarioId);
+    } catch (err) {
+      setAlerta(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível editar o comentário."
+      );
+    }
+  };
+
   const renderizarComentarios = (
     lista: ComentarioNode[],
     nivel = 0
@@ -414,7 +507,38 @@ export default function ComentariosSection({
                 </div>
               </div>
 
-              <p className="comentario-texto">{comentario.content}</p>
+              {comentarioEmEdicao === comentario.id ? (
+                <div className="comentario-edicao-form">
+                  <textarea
+                    rows={3}
+                    value={edicaoRascunho[comentario.id] || ""}
+                    onChange={(event) =>
+                      setEdicaoRascunho((prev) => ({
+                        ...prev,
+                        [comentario.id]: event.target.value,
+                      }))
+                    }
+                  />
+                  <div className="comentario-edicao-acoes">
+                    <button
+                      type="button"
+                      className="comentario-edicao-cancelar"
+                      onClick={() => handleCancelarEdicao(comentario.id)}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="comentario-edicao-guardar"
+                      onClick={() => handleGuardarEdicao(comentario.id)}
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="comentario-texto">{comentario.content}</p>
+              )}
 
               <div className="comentario-controles">
                 <button
@@ -437,6 +561,15 @@ export default function ComentariosSection({
                 >
                   Responder
                 </button>
+                {utilizadorAtual && utilizadorAtual.id === comentario.userId && comentarioEmEdicao !== comentario.id && (
+                  <button
+                    type="button"
+                    className="comentario-editar"
+                    onClick={() => handleAbrirEdicao(comentario)}
+                  >
+                    Editar
+                  </button>
+                )}
               </div>
 
               {comentarioEmResposta === comentario.id && (

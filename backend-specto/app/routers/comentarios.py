@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_session
 from app.models import Comentario, Filme, Serie, Like, User
 from app.routers.auth import get_current_user, get_current_user_optional
-from app.schemas.comment import CommentCreate, CommentLikeResponse, CommentList, CommentOut, CommentUser
+from app.schemas.comment import CommentCreate, CommentLikeResponse, CommentList, CommentOut, CommentUpdate, CommentUser
 from app.utils.avatars import build_avatar_url
 
 router = APIRouter(prefix="/comentarios", tags=["Comentários"])
@@ -228,3 +228,55 @@ async def alternar_like(
     likes = likes_result.scalar_one()
 
     return CommentLikeResponse(liked=liked, likes=likes)
+
+
+@router.put("/{comentario_id}", response_model=CommentOut)
+async def editar_comentario(
+    comentario_id: int,
+    payload: CommentUpdate,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    """Editar um comentário existente. Apenas o autor pode editar."""
+    comentario = await session.get(Comentario, comentario_id)
+    if not comentario:
+        raise HTTPException(status_code=404, detail="Comentário não encontrado.")
+
+    if comentario.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Não tens permissão para editar este comentário.",
+        )
+
+    comentario.texto = payload.texto
+    await session.commit()
+    await session.refresh(comentario)
+
+    comment_user = CommentUser(
+        id=user.id,
+        username=user.username,
+        avatar_url=build_avatar_url(user.avatar_url, request),
+    )
+
+    # Get likes count
+    likes_result = await session.execute(
+        select(func.count(Like.id)).where(Like.comentario_id == comentario_id)
+    )
+    likes = likes_result.scalar_one()
+
+    # Check if user liked
+    liked_result = await session.execute(
+        select(Like).where(Like.comentario_id == comentario_id, Like.user_id == user.id)
+    )
+    liked_by_user = liked_result.scalar_one_or_none() is not None
+
+    return CommentOut(
+        id=comentario.id,
+        texto=comentario.texto,
+        created_at=comentario.criado_em,
+        likes=likes,
+        liked_by_user=liked_by_user,
+        user=comment_user,
+        replies=[],
+    )

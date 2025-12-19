@@ -592,16 +592,26 @@ export default function Perfil() {
                     <h3>Conquistas</h3>
                     <div className="perfil-badges-grid">
                       {reputation?.achievements?.length ? (
-                        reputation.achievements.map((ach) => (
-                          <div key={ach.id} className={`perfil-badge ${ach.unlocked_at ? "unlocked" : "locked"}`} title={ach.description}>
-                            <div className="perfil-badge-icon">
-                              {ach.icon_url ? <img src={ach.icon_url} alt={ach.name} /> : "🏆"}
+                        reputation.achievements.map((ach) => {
+                          // Check if icon is emoji (not a URL)
+                          const isEmoji = ach.icon_url && !ach.icon_url.startsWith('http') && !ach.icon_url.startsWith('/');
+                          return (
+                            <div key={ach.id} className={`perfil-badge ${ach.unlocked_at ? "unlocked" : "locked"}`} title={ach.description}>
+                              <div className="perfil-badge-icon">
+                                {isEmoji ? (
+                                  <span className="perfil-badge-emoji">{ach.icon_url}</span>
+                                ) : ach.icon_url ? (
+                                  <img src={ach.icon_url} alt={ach.name} />
+                                ) : (
+                                  <span className="perfil-badge-emoji">🏆</span>
+                                )}
+                              </div>
+                              <span className="perfil-badge-name">{ach.name}</span>
                             </div>
-                            <span className="perfil-badge-name">{ach.name}</span>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
-                        <p className="perfil-empty-badges">A carregar conquistas...</p>
+                        <p className="perfil-empty-badges">Ainda não tens conquistas desbloqueadas.</p>
                       )}
                     </div>
                   </div>
