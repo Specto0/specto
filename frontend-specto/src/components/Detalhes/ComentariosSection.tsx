@@ -222,7 +222,7 @@ export default function ComentariosSection({
     }
 
     try {
-      const response = await fetch(buildApiUrl("/comentarios"), {
+      const response = await fetch(buildApiUrl("/comentarios/"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
