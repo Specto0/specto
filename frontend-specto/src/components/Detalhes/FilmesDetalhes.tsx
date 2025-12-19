@@ -173,7 +173,7 @@ export default function FilmesDetalhes() {
 
     const controller = new AbortController();
 
-    fetch(buildApiUrl("/vistos"), {
+    fetch(buildApiUrl("/vistos/"), {
       headers: { Authorization: `Bearer ${token}` },
       signal: controller.signal,
     })
@@ -219,7 +219,7 @@ export default function FilmesDetalhes() {
     setFeedback(null);
 
     try {
-      const response = await fetch(buildApiUrl("/vistos"), {
+      const response = await fetch(buildApiUrl("/vistos/"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
