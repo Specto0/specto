@@ -5,13 +5,6 @@ const LOCAL_FALLBACK = "http://127.0.0.1:8000";
 const PRODUCTION_URL = "https://specto-production.up.railway.app";
 
 /**
- * Checks if the current page is running over HTTPS.
- */
-const isHttpsPage = (): boolean => {
-  return typeof window !== "undefined" && window.location.protocol === "https:";
-};
-
-/**
  * Checks if we're running on a production domain (not localhost).
  */
 const isProductionDomain = (): boolean => {
@@ -20,16 +13,18 @@ const isProductionDomain = (): boolean => {
   return hostname !== "localhost" && hostname !== "127.0.0.1";
 };
 
+const isLocalHttp = (url: string): boolean => {
+  return /^http:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?(\/|$)/i.test(url);
+};
+
 /**
  * Ensures HTTPS is used. This is called on EVERY request, not cached.
  */
 const ensureHttps = (url: string): string => {
-  // Always force HTTPS for production URLs
-  if (url.includes("specto-production.up.railway.app") && url.startsWith("http://")) {
-    return url.replace("http://", "https://");
+  if (url.startsWith("http://") && isLocalHttp(url)) {
+    return url;
   }
-  // Also force HTTPS if we're on an HTTPS page
-  if (isHttpsPage() && url.startsWith("http://")) {
+  if (url.startsWith("http://")) {
     return url.replace("http://", "https://");
   }
   return url;
