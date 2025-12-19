@@ -59,10 +59,11 @@ const resolveBaseUrl = (): string => {
 export const API_BASE_URL = resolveBaseUrl();
 
 export const buildApiUrl = (path: string): string => {
-  if (!path) return API_BASE_URL;
+  if (!path) return ensureHttps(API_BASE_URL);
 
   const formattedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE_URL}${formattedPath}`;
+  // Always ensure HTTPS for production - this catches any cached http:// values
+  return ensureHttps(`${API_BASE_URL}${formattedPath}`);
 };
 
 export const buildWsUrl = (path: string): string => {
