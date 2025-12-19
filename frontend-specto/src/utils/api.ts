@@ -5,72 +5,89 @@ const LOCAL_FALLBACK = "http://127.0.0.1:8000";
 const PRODUCTION_URL = "https://specto-production.up.railway.app";
 
 /**
- * Ensures HTTPS is used when the page is loaded over HTTPS.
- * This prevents Mixed Content errors in production.
+ * Checks if the current page is running over HTTPS.
+ */
+const isHttpsPage = (): boolean => {
+  return typeof window !== "undefined" && window.location.protocol === "https:";
+};
+
+/**
+ * Checks if we're running on a production domain (not localhost).
+ */
+const isProductionDomain = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const hostname = window.location.hostname;
+  return hostname !== "localhost" && hostname !== "127.0.0.1";
+};
+
+/**
+ * Ensures HTTPS is used. This is called on EVERY request, not cached.
  */
 const ensureHttps = (url: string): string => {
-  if (
-    typeof window !== "undefined" &&
-    window.location.protocol === "https:" &&
-    url.startsWith("http://")
-  ) {
+  // Always force HTTPS for production URLs
+  if (url.includes("specto-production.up.railway.app") && url.startsWith("http://")) {
+    return url.replace("http://", "https://");
+  }
+  // Also force HTTPS if we're on an HTTPS page
+  if (isHttpsPage() && url.startsWith("http://")) {
     return url.replace("http://", "https://");
   }
   return url;
 };
 
-const resolveBaseUrl = (): string => {
+/**
+ * Gets the base URL. Called dynamically to handle SSR vs client differences.
+ */
+const getBaseUrl = (): string => {
   const envValue = typeof import.meta.env.VITE_API_BASE_URL === "string"
     ? import.meta.env.VITE_API_BASE_URL.trim()
     : "";
 
   if (envValue) {
-    return ensureHttps(stripTrailingSlash(envValue));
+    return stripTrailingSlash(envValue);
   }
 
-  // If we're in production (not localhost), use the production URL
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname !== "localhost" &&
-    window.location.hostname !== "127.0.0.1"
-  ) {
+  // Production domain check
+  if (isProductionDomain()) {
     return PRODUCTION_URL;
   }
 
-  // Local development fallback
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")
-  ) {
-    return LOCAL_FALLBACK;
-  }
-
-  if (import.meta.env.PROD) {
-    console.warn(
-      "API_BASE_URL indefinido em produção. A usar fallback de produção.",
-    );
+  // During SSR or build-time, assume production if PROD flag is set
+  if (import.meta.env.PROD && typeof window === "undefined") {
     return PRODUCTION_URL;
   }
 
   return LOCAL_FALLBACK;
 };
 
-export const API_BASE_URL = resolveBaseUrl();
+// Initial URL for logging/debugging (will be corrected at runtime)
+export const API_BASE_URL = getBaseUrl();
 
+/**
+ * Builds the full API URL. ALWAYS ensures HTTPS for production at call time.
+ */
 export const buildApiUrl = (path: string): string => {
-  if (!path) return ensureHttps(API_BASE_URL);
+  // Get base URL dynamically and ensure HTTPS
+  const baseUrl = ensureHttps(getBaseUrl());
+
+  if (!path) return baseUrl;
 
   const formattedPath = path.startsWith("/") ? path : `/${path}`;
-  // Always ensure HTTPS for production - this catches any cached http:// values
-  return ensureHttps(`${API_BASE_URL}${formattedPath}`);
+  const fullUrl = `${baseUrl}${formattedPath}`;
+
+  // Double-check HTTPS is used
+  return ensureHttps(fullUrl);
 };
 
 export const buildWsUrl = (path: string): string => {
-  const base = API_BASE_URL.replace(/^http/, "ws");
+  const baseUrl = ensureHttps(getBaseUrl());
+  // For WSS, we need wss:// not ws://
+  const wsBase = baseUrl.replace(/^https:/, "wss:").replace(/^http:/, "ws:");
   const formattedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${formattedPath}`;
+  return `${wsBase}${formattedPath}`;
 };
 
+// Debug logging
 console.log("🔧 API_BASE_URL =>", API_BASE_URL);
 console.log("🔧 login URL =>", buildApiUrl("/auth/login"));
+console.log("🔧 window.location.protocol =>", typeof window !== "undefined" ? window.location.protocol : "N/A");
