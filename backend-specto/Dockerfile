@@ -18,8 +18,13 @@ COPY . .
 # Create static directory for avatars if it doesn't exist
 RUN mkdir -p static/avatars
 
+# Default port (Railway will override via $PORT)
+ENV PORT=8000
+
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run migrations and start the application
+# Using shell form to allow variable expansion
+CMD alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port $PORT
+
