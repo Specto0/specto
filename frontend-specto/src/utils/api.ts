@@ -2,6 +2,22 @@ const stripTrailingSlash = (value: string): string =>
   value.replace(/\/+$/, "");
 
 const LOCAL_FALLBACK = "http://127.0.0.1:8000";
+const PRODUCTION_URL = "https://specto-production.up.railway.app";
+
+/**
+ * Ensures HTTPS is used when the page is loaded over HTTPS.
+ * This prevents Mixed Content errors in production.
+ */
+const ensureHttps = (url: string): string => {
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    url.startsWith("http://")
+  ) {
+    return url.replace("http://", "https://");
+  }
+  return url;
+};
 
 const resolveBaseUrl = (): string => {
   const envValue = typeof import.meta.env.VITE_API_BASE_URL === "string"
@@ -9,9 +25,19 @@ const resolveBaseUrl = (): string => {
     : "";
 
   if (envValue) {
-    return stripTrailingSlash(envValue);
+    return ensureHttps(stripTrailingSlash(envValue));
   }
 
+  // If we're in production (not localhost), use the production URL
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    return PRODUCTION_URL;
+  }
+
+  // Local development fallback
   if (
     typeof window !== "undefined" &&
     (window.location.hostname === "localhost" ||
@@ -21,9 +47,10 @@ const resolveBaseUrl = (): string => {
   }
 
   if (import.meta.env.PROD) {
-    console.error(
-      "API_BASE_URL indefinido em produção. Define VITE_API_BASE_URL no ambiente.",
+    console.warn(
+      "API_BASE_URL indefinido em produção. A usar fallback de produção.",
     );
+    return PRODUCTION_URL;
   }
 
   return LOCAL_FALLBACK;

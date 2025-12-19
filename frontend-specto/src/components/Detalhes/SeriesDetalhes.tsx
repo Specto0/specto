@@ -50,6 +50,11 @@ export default function SeriesDetalhes() {
   const [activeTrailerIndex, setActiveTrailerIndex] = useState(0);
   const [ondeAssistir, setOndeAssistir] = useState<any | null>(null);
 
+  // Scroll to top when component mounts or series ID changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   useEffect(() => {
     const unsubscribe = subscribeTheme(setThemeMode);
     return unsubscribe;

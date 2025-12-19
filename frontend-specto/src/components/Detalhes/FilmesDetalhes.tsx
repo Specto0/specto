@@ -56,6 +56,11 @@ export default function FilmesDetalhes() {
   const [ondeAssistir, setOndeAssistir] = useState<any | null>(null);
 
 
+  // Scroll to top when component mounts or movie ID changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   useEffect(() => {
     const unsubscribe = subscribeTheme(setThemeMode);
     return unsubscribe;
